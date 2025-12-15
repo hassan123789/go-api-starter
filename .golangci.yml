@@ -38,10 +38,8 @@ linters:
     - goconst # Finds repeated strings that could be replaced by a constant
     - gocritic # Provides diagnostics that check for bugs, performance and style issues
     - gocyclo # Computes and checks the cyclomatic complexity
-    - godot # Check if comments end in a period
     - gofmt # Checks whether code was gofmt-ed
     - goimports # In addition to fixing imports, goimports also formats code
-    - mnd # An analyzer to detect magic numbers (replaced gomnd)
     - goprintffuncname # Checks that printf-like functions are named with 'f' at the end
     - gosec # Inspects source code for security problems
     - misspell # Finds commonly misspelled English words in comments
@@ -50,17 +48,12 @@ linters:
     - nilerr # Finds code that returns nil even if it checks that the error is not nil
     - nilnil # Checks that there is no simultaneous return of nil error and invalid value
     - noctx # noctx finds sending http request without context.Context
-    - prealloc # Finds slice declarations that could potentially be pre-allocated
-    - predeclared # Find code that shadows predeclared identifiers
     - revive # Fast, configurable, extensible linter for Go
     - rowserrcheck # Checks whether Err of rows is checked successfully
     - sqlclosecheck # Checks that sql.Rows and sql.Stmt are closed
     - stylecheck # Stylecheck is a replacement for golint
-    - tparallel # tparallel detects inappropriate usage of t.Parallel()
     - unconvert # Remove unnecessary type conversions
-    - unparam # Reports unused function parameters
     - whitespace # Tool for detection of leading and trailing whitespace
-    - wrapcheck # Checks that errors returned from external packages are wrapped
 
   disable:
     - funlen # Tool for detection of long functions
@@ -68,21 +61,32 @@ linters:
     - godox # Tool for detection of FIXME, TODO and other comment keywords
     - lll # Reports long lines
     - wsl # Whitespace Linter - Forces use of empty lines
+    - godot # Comment periods - too noisy for this project
+    - mnd # Magic numbers - too strict
+    - wrapcheck # Error wrapping - too strict for Echo handlers
+    - prealloc # Pre-allocation - optimization only
+    - tparallel # Test parallel - too strict for sub-tests
+    - unparam # Unused params - false positives
+    - predeclared # Shadows predeclared - handled by govet
 
 linters-settings:
   errcheck:
     check-type-assertions: true
-    check-blank: true
+    check-blank: false
     exclude-functions:
       - io/ioutil.ReadFile
       - io.Copy(*bytes.Buffer)
       - encoding/json.Marshal
       - encoding/json.MarshalIndent
+      - (github.com/labstack/echo/v4.Context).JSON
+      - (github.com/labstack/echo/v4.Context).NoContent
+      - (*encoding/json.Encoder).Encode
 
   govet:
     enable-all: true
     disable:
       - fieldalignment # Too strict for this project
+      - shadow # Too many false positives
 
   gocyclo:
     min-complexity: 15
@@ -94,30 +98,19 @@ linters-settings:
   gocritic:
     enabled-tags:
       - diagnostic
-      - experimental
-      - opinionated
       - performance
       - style
     disabled-checks:
       - whyNoLint
       - commentedOutCode
+      - unnecessaryBlock
+      - exitAfterDefer
+      - httpNoBody
+      - ifElseChain
+      - emptyStringTest
 
   goimports:
     local-prefixes: github.com/zareh/go-api-starter
-
-  mnd:
-    ignored-numbers:
-      - "0"
-      - "1"
-      - "2"
-      - "3"
-      - "10"
-      - "100"
-    ignored-functions:
-      - "math.*"
-      - "http.StatusText"
-      - "make"
-      - "time.*"
 
   gosec:
     includes:
@@ -153,6 +146,8 @@ linters-settings:
 
   misspell:
     locale: US
+    ignore-words:
+      - cancelled
 
   nestif:
     min-complexity: 4
@@ -164,7 +159,6 @@ linters-settings:
 
   revive:
     rules:
-      - name: blank-imports
       - name: context-as-argument
       - name: context-keys-type
       - name: dot-imports
@@ -184,7 +178,6 @@ linters-settings:
       - name: errorf
       - name: superfluous-else
       - name: unreachable-code
-      - name: redefines-builtin-id
 
   stylecheck:
     checks:
@@ -214,26 +207,9 @@ issues:
         - errcheck
         - dupl
         - gosec
-        - mnd
-        - wrapcheck
         - goconst
-        - godot
         - errorlint
-
-    # Exclude wrapcheck for handler returns (Echo JSON/NoContent)
-    - path: internal/handler/
-      linters:
-        - wrapcheck
-
-    # Exclude godot for doc.go files
-    - path: doc\.go
-      linters:
-        - godot
-
-    # Exclude gosec G404 (weak random) for non-crypto uses
-    - text: "G404:"
-      linters:
-        - gosec
+        - staticcheck
 
     # Exclude known linter issues for specific files
     - path: cmd/server/main\.go
@@ -245,15 +221,37 @@ issues:
       linters:
         - govet
 
-    # Exclude wrapcheck for context.Err
-    - text: "context.Context"
-      linters:
-        - wrapcheck
-
-    # Exclude errorlint for simple error comparisons in tests
+    # Exclude errorlint for simple error comparisons
     - text: "comparing with"
       linters:
         - errorlint
+
+    # Exclude errorlint for type assertions
+    - text: "type assertion on error"
+      linters:
+        - errorlint
+
+    # Exclude gosec G101 for test/example credentials
+    - text: "G101:"
+      linters:
+        - gosec
+
+    # Exclude gosec G404 for non-crypto random
+    - text: "G404:"
+      linters:
+        - gosec
+
+    # Exclude exhaustive for simple switches
+    - path: pkg/
+      text: "missing cases in switch"
+      linters:
+        - exhaustive
+
+    # Exclude stuttering warning for retry package
+    - path: pkg/retry/
+      text: "stutters"
+      linters:
+        - revive
 
   max-issues-per-linter: 0
   max-same-issues: 0

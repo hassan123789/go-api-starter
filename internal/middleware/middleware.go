@@ -309,17 +309,19 @@ func ErrorHandler(logger *slog.Logger) echo.HTTPErrorHandler {
 		)
 
 		// Build response
-		response := map[string]interface{}{
-			"error": map[string]interface{}{
-				"code":    errorCode,
-				"message": message,
-			},
+		errorMap := map[string]interface{}{
+			"code":    errorCode,
+			"message": message,
 		}
 
 		if details != "" {
-			response["error"].(map[string]interface{})["details"] = details
+			errorMap["details"] = details
 		}
 
-		c.JSON(code, response)
+		response := map[string]interface{}{
+			"error": errorMap,
+		}
+
+		_ = c.JSON(code, response)
 	}
 }

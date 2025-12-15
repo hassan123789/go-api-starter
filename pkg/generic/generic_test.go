@@ -175,13 +175,13 @@ func TestPartition(t *testing.T) {
 func TestMinMax(t *testing.T) {
 	nums := []int{3, 1, 4, 1, 5, 9, 2, 6}
 
-	min := generic.Min(nums)
-	if !min.IsSome() || min.Unwrap() != 1 {
+	minVal := generic.Min(nums)
+	if !minVal.IsSome() || minVal.Unwrap() != 1 {
 		t.Error("expected min to be 1")
 	}
 
-	max := generic.Max(nums)
-	if !max.IsSome() || max.Unwrap() != 9 {
+	maxVal := generic.Max(nums)
+	if !maxVal.IsSome() || maxVal.Unwrap() != 9 {
 		t.Error("expected max to be 9")
 	}
 

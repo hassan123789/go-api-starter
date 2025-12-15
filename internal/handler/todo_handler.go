@@ -22,12 +22,21 @@ func NewTodoHandler(todoService *service.TodoService) *TodoHandler {
 	return &TodoHandler{todoService: todoService}
 }
 
-// getUserIDFromToken extracts user ID from JWT token
+// getUserIDFromToken extracts user ID from JWT token.
 func getUserIDFromToken(c echo.Context) (int64, error) {
-	user := c.Get("user").(*jwt.Token)
-	claims := user.Claims.(jwt.MapClaims)
-	userID := int64(claims["user_id"].(float64))
-	return userID, nil
+	user, ok := c.Get("user").(*jwt.Token)
+	if !ok {
+		return 0, errors.New("invalid token type")
+	}
+	claims, ok := user.Claims.(jwt.MapClaims)
+	if !ok {
+		return 0, errors.New("invalid claims type")
+	}
+	userIDFloat, ok := claims["user_id"].(float64)
+	if !ok {
+		return 0, errors.New("invalid user_id type")
+	}
+	return int64(userIDFloat), nil
 }
 
 // List returns all todos for the authenticated user

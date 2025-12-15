@@ -308,7 +308,10 @@ func (c *Cache[K, V]) evictOldest() {
 		return
 	}
 
-	key := elem.Value.(K)
+	key, ok := elem.Value.(K)
+	if !ok {
+		return
+	}
 	if item, exists := c.items[key]; exists {
 		c.removeEntry(key, item)
 	}
