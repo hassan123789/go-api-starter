@@ -3,6 +3,7 @@ package circuitbreaker
 import (
 	"context"
 	"errors"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -199,6 +200,7 @@ func TestCircuitBreaker_ExecuteWithFallback(t *testing.T) {
 }
 
 func TestCircuitBreaker_OnStateChange(t *testing.T) {
+	var mu sync.Mutex
 	var changes []struct {
 		from, to State
 	}
@@ -208,7 +210,9 @@ func TestCircuitBreaker_OnStateChange(t *testing.T) {
 		Timeout:             50 * time.Millisecond,
 		MaxHalfOpenRequests: 1,
 		OnStateChange: func(from, to State) {
+			mu.Lock()
 			changes = append(changes, struct{ from, to State }{from, to})
+			mu.Unlock()
 		},
 	})
 
@@ -233,8 +237,12 @@ func TestCircuitBreaker_OnStateChange(t *testing.T) {
 	// Wait for callbacks
 	time.Sleep(10 * time.Millisecond)
 
-	if len(changes) < 2 {
-		t.Errorf("expected at least 2 state changes, got %d", len(changes))
+	mu.Lock()
+	numChanges := len(changes)
+	mu.Unlock()
+
+	if numChanges < 2 {
+		t.Errorf("expected at least 2 state changes, got %d", numChanges)
 	}
 }
 
