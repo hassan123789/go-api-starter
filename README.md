@@ -2,6 +2,7 @@
 
 [![Go Version](https://img.shields.io/badge/Go-1.22+-00ADD8?style=flat&logo=go)](https://go.dev/)
 [![CI](https://github.com/hassan123789/go-api-starter/actions/workflows/ci.yml/badge.svg)](https://github.com/hassan123789/go-api-starter/actions/workflows/ci.yml)
+[![Security](https://github.com/hassan123789/go-api-starter/actions/workflows/security.yml/badge.svg)](https://github.com/hassan123789/go-api-starter/actions/workflows/security.yml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/hassan123789/go-api-starter)](https://goreportcard.com/report/github.com/hassan123789/go-api-starter)
 [![codecov](https://codecov.io/gh/hassan123789/go-api-starter/branch/main/graph/badge.svg)](https://codecov.io/gh/hassan123789/go-api-starter)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -100,26 +101,55 @@ go-api-starter/
 ├── pkg/                     # Public reusable packages
 │   ├── apperrors/           # Custom error types
 │   │   ├── errors.go        # AppError, ErrorCode, helpers
-│   │   └── errors_test.go
+│   │   ├── errors_test.go
+│   │   └── doc.go           # Package documentation
+│   ├── cache/               # Generic in-memory cache
+│   │   ├── cache.go         # TTL, LRU eviction
+│   │   ├── cache_test.go
+│   │   └── doc.go
 │   ├── circuitbreaker/      # Circuit breaker pattern
 │   │   ├── circuitbreaker.go
-│   │   └── circuitbreaker_test.go
+│   │   ├── circuitbreaker_test.go
+│   │   └── doc.go
 │   ├── ctxutil/             # Context utilities
 │   │   ├── ctxutil.go       # Type-safe context values
-│   │   └── ctxutil_test.go
+│   │   ├── ctxutil_test.go
+│   │   └── doc.go
 │   ├── generic/             # Generic utilities
 │   │   ├── generic.go       # Result, Option, Filter, Map, etc.
-│   │   └── generic_test.go
+│   │   ├── generic_test.go
+│   │   ├── example_test.go  # Examples for pkg.go.dev
+│   │   ├── benchmark_test.go
+│   │   └── doc.go
 │   ├── healthcheck/         # Health check system
 │   │   ├── healthcheck.go
 │   │   └── healthcheck_test.go
+│   ├── metrics/             # Prometheus metrics
+│   │   ├── metrics.go       # HTTP & business metrics
+│   │   ├── metrics_test.go
+│   │   └── doc.go
+│   ├── retry/               # Retry with backoff
+│   │   ├── retry.go         # Exponential backoff, jitter
+│   │   ├── retry_test.go
+│   │   └── doc.go
 │   ├── server/              # Server with functional options
 │   │   └── server.go
 │   ├── workerpool/          # Worker pool for concurrency
 │   │   ├── workerpool.go
-│   │   └── workerpool_test.go
+│   │   ├── workerpool_test.go
+│   │   ├── example_test.go
+│   │   ├── benchmark_test.go
+│   │   └── doc.go
 │   ├── response/            # Standard API responses
 │   └── validator/           # Input validation
+│
+├── api/
+│   ├── openapi.yaml         # OpenAPI 3.1 specification
+│   └── README.md            # API documentation guide
+│
+├── deploy/
+│   ├── prometheus.yml       # Prometheus configuration
+│   └── grafana/             # Grafana provisioning
 │
 ├── db/
 │   ├── migrations/          # SQL migrations
@@ -127,12 +157,17 @@ go-api-starter/
 │
 ├── .github/
 │   └── workflows/
-│       └── ci.yml           # GitHub Actions CI/CD
+│       ├── ci.yml           # CI pipeline
+│       ├── security.yml     # Security scanning
+│       └── release.yml      # Release automation
 │
 ├── .golangci.yml            # Linter configuration (50+ linters)
+├── cliff.toml               # Changelog generation
 ├── Dockerfile               # Multi-stage build
-├── docker-compose.yml       # Local development
+├── docker-compose.yml       # Local development with Swagger UI
 ├── Makefile                 # Development commands
+├── CONTRIBUTING.md          # Contribution guidelines
+├── SECURITY.md              # Security policy
 └── README.md
 ```
 
