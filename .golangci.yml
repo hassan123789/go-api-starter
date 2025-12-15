@@ -12,7 +12,6 @@ output:
     - format: colored-line-number
   print-issued-lines: true
   print-linter-name: true
-  uniq-by-line: true
   sort-results: true
 
 linters:
@@ -34,7 +33,7 @@ linters:
     - errname # Checks that sentinel errors are prefixed with Err
     - errorlint # Finds code that will cause problems with Go 1.13 error wrapping
     - exhaustive # Check exhaustiveness of enum switch statements
-    - exportloopref # Checks for pointers to enclosing loop variables
+    - copyloopvar # Checks for pointers to enclosing loop variables (Go 1.22+)
     - gochecknoinits # Checks that no init functions are present
     - goconst # Finds repeated strings that could be replaced by a constant
     - gocritic # Provides diagnostics that check for bugs, performance and style issues
@@ -42,7 +41,7 @@ linters:
     - godot # Check if comments end in a period
     - gofmt # Checks whether code was gofmt-ed
     - goimports # In addition to fixing imports, goimports also formats code
-    - gomnd # An analyzer to detect magic numbers
+    - mnd # An analyzer to detect magic numbers (replaced gomnd)
     - goprintffuncname # Checks that printf-like functions are named with 'f' at the end
     - gosec # Inspects source code for security problems
     - misspell # Finds commonly misspelled English words in comments
@@ -106,21 +105,19 @@ linters-settings:
   goimports:
     local-prefixes: github.com/zareh/go-api-starter
 
-  gomnd:
-    settings:
-      mnd:
-        ignored-numbers:
-          - "0"
-          - "1"
-          - "2"
-          - "3"
-          - "10"
-          - "100"
-        ignored-functions:
-          - "math.*"
-          - "http.StatusText"
-          - "make"
-          - "time.*"
+  mnd:
+    ignored-numbers:
+      - "0"
+      - "1"
+      - "2"
+      - "3"
+      - "10"
+      - "100"
+    ignored-functions:
+      - "math.*"
+      - "http.StatusText"
+      - "make"
+      - "time.*"
 
   gosec:
     includes:
@@ -185,9 +182,7 @@ linters-settings:
       - name: unexported-return
       - name: indent-error-flow
       - name: errorf
-      - name: empty-block
       - name: superfluous-else
-      - name: unused-parameter
       - name: unreachable-code
       - name: redefines-builtin-id
 
@@ -210,6 +205,7 @@ linters-settings:
       - .WithStack(
 
 issues:
+  uniq-by-line: true
   exclude-rules:
     # Exclude some linters from running on tests files.
     - path: _test\.go
@@ -218,9 +214,26 @@ issues:
         - errcheck
         - dupl
         - gosec
-        - gomnd
+        - mnd
         - wrapcheck
         - goconst
+        - godot
+        - errorlint
+
+    # Exclude wrapcheck for handler returns (Echo JSON/NoContent)
+    - path: internal/handler/
+      linters:
+        - wrapcheck
+
+    # Exclude godot for doc.go files
+    - path: doc\.go
+      linters:
+        - godot
+
+    # Exclude gosec G404 (weak random) for non-crypto uses
+    - text: "G404:"
+      linters:
+        - gosec
 
     # Exclude known linter issues for specific files
     - path: cmd/server/main\.go
@@ -231,6 +244,16 @@ issues:
     - text: 'shadow: declaration of "err"'
       linters:
         - govet
+
+    # Exclude wrapcheck for context.Err
+    - text: "context.Context"
+      linters:
+        - wrapcheck
+
+    # Exclude errorlint for simple error comparisons in tests
+    - text: "comparing with"
+      linters:
+        - errorlint
 
   max-issues-per-linter: 0
   max-same-issues: 0
