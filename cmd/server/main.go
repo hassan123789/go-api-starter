@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -15,21 +15,30 @@ import (
 
 	"github.com/zareh/go-api-starter/internal/config"
 	"github.com/zareh/go-api-starter/internal/handler"
+	custommw "github.com/zareh/go-api-starter/internal/middleware"
 	"github.com/zareh/go-api-starter/internal/repository"
 	"github.com/zareh/go-api-starter/internal/service"
 )
 
 func main() {
+	// Initialize structured logger
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+	slog.SetDefault(logger)
+
 	// Load configuration
 	cfg, err := config.Load()
 	if err != nil {
-		log.Fatalf("Failed to load config: %v", err)
+		slog.Error("Failed to load config", "error", err)
+		os.Exit(1)
 	}
 
 	// Connect to database
 	db, err := repository.NewDB(cfg.DatabaseURL)
 	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
+		slog.Error("Failed to connect to database", "error", err)
+		os.Exit(1)
 	}
 	defer db.Close()
 
@@ -49,9 +58,17 @@ func main() {
 	e := echo.New()
 	e.HideBanner = true
 
-	// Middleware
-	e.Use(middleware.Logger())
-	e.Use(middleware.Recover())
+	// Custom error handler
+	e.HTTPErrorHandler = custommw.ErrorHandler(logger)
+
+	// Initialize rate limiter: 100 requests per second
+	rateLimiter := custommw.NewRateLimiter(100, time.Second)
+
+	// Middleware - Order matters!
+	e.Use(custommw.RequestID())                      // Add request ID first
+	e.Use(custommw.StructuredLogger(logger))         // Structured logging with slog
+	e.Use(custommw.Recover(logger))                  // Panic recovery with stack trace
+	e.Use(custommw.RateLimitMiddleware(rateLimiter)) // Rate limiter
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"*"},
 		AllowMethods: []string{
@@ -66,6 +83,7 @@ func main() {
 			echo.HeaderContentType,
 			echo.HeaderAccept,
 			echo.HeaderAuthorization,
+			"X-Request-ID",
 		},
 	}))
 
@@ -109,9 +127,10 @@ func main() {
 	// Start server
 	go func() {
 		addr := ":" + cfg.Port
-		log.Printf("Starting server on %s", addr)
+		slog.Info("Starting server", "address", addr)
 		if err := e.Start(addr); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("Failed to start server: %v", err)
+			slog.Error("Failed to start server", "error", err)
+			os.Exit(1)
 		}
 	}()
 
@@ -120,14 +139,15 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
-	log.Println("Shutting down server...")
+	slog.Info("Shutting down server...")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	if err := e.Shutdown(ctx); err != nil {
-		log.Fatalf("Failed to shutdown server: %v", err)
+		slog.Error("Failed to shutdown server", "error", err)
+		os.Exit(1)
 	}
 
-	log.Println("Server shutdown completed")
+	slog.Info("Server shutdown completed")
 }

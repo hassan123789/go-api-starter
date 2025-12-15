@@ -167,3 +167,71 @@ func (r *TodoRepository) Delete(ctx context.Context, id int64) error {
 
 	return nil
 }
+
+// Update updates an existing todo (interface compliance)
+func (r *TodoRepository) UpdateTodo(ctx context.Context, todo *model.Todo) error {
+	query := `
+		UPDATE todos
+		SET title = $1, completed = $2, updated_at = $3
+		WHERE id = $4
+	`
+	todo.UpdatedAt = time.Now()
+	_, err := r.db.ExecContext(ctx, query, todo.Title, todo.Completed, todo.UpdatedAt, todo.ID)
+	return err
+}
+
+// GetByUserIDWithPagination retrieves todos with pagination support
+func (r *TodoRepository) GetByUserIDWithPagination(ctx context.Context, userID int64, limit, offset int) ([]model.Todo, int64, error) {
+	// Get total count
+	countQuery := `SELECT COUNT(*) FROM todos WHERE user_id = $1`
+	var total int64
+	if err := r.db.QueryRowContext(ctx, countQuery, userID).Scan(&total); err != nil {
+		return nil, 0, err
+	}
+
+	// Get paginated results
+	query := `
+		SELECT id, user_id, title, completed, created_at, updated_at
+		FROM todos
+		WHERE user_id = $1
+		ORDER BY created_at DESC
+		LIMIT $2 OFFSET $3
+	`
+
+	rows, err := r.db.QueryContext(ctx, query, userID, limit, offset)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	var todos []model.Todo
+	for rows.Next() {
+		var todo model.Todo
+		err := rows.Scan(
+			&todo.ID,
+			&todo.UserID,
+			&todo.Title,
+			&todo.Completed,
+			&todo.CreatedAt,
+			&todo.UpdatedAt,
+		)
+		if err != nil {
+			return nil, 0, err
+		}
+		todos = append(todos, todo)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, 0, err
+	}
+
+	return todos, total, nil
+}
+
+// CountByUserID returns the total count of todos for a user
+func (r *TodoRepository) CountByUserID(ctx context.Context, userID int64) (int64, error) {
+	query := `SELECT COUNT(*) FROM todos WHERE user_id = $1`
+	var count int64
+	err := r.db.QueryRowContext(ctx, query, userID).Scan(&count)
+	return count, err
+}

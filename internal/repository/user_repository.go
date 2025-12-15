@@ -101,3 +101,35 @@ func (r *UserRepository) EmailExists(ctx context.Context, email string) (bool, e
 
 	return exists, nil
 }
+
+// Update updates an existing user
+func (r *UserRepository) Update(ctx context.Context, user *model.User) error {
+	query := `
+		UPDATE users
+		SET email = $1, password_hash = $2, updated_at = $3
+		WHERE id = $4
+	`
+	user.UpdatedAt = time.Now()
+	_, err := r.db.ExecContext(ctx, query, user.Email, user.PasswordHash, user.UpdatedAt, user.ID)
+	return err
+}
+
+// Delete removes a user by their ID
+func (r *UserRepository) Delete(ctx context.Context, id int64) error {
+	query := `DELETE FROM users WHERE id = $1`
+	result, err := r.db.ExecContext(ctx, query, id)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return sql.ErrNoRows
+	}
+
+	return nil
+}
