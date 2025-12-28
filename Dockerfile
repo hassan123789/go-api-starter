@@ -55,7 +55,7 @@ EXPOSE 8080
 ENTRYPOINT ["/server"]
 
 # Alternative: Alpine-based production image (if you need shell access for debugging)
-FROM alpine:3.21 AS production-alpine
+FROM alpine:3.23 AS production-alpine
 
 # Install runtime dependencies
 RUN apk --no-cache add ca-certificates tzdata && \
