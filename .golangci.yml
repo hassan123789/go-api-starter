@@ -1,266 +1,133 @@
-# Go API Starter - golangci-lint configuration
+# Go API Starter - golangci-lint v2 configuration
 # https://golangci-lint.run/usage/configuration/
 
 version: "2"
 
 run:
   timeout: 5m
-  issues-exit-code: 1
   tests: true
-  modules-download-mode: readonly
 
 output:
   formats:
-    colored-line-number: {}
-  print-issued-lines: true
-  print-linter-name: true
-  sort-results: true
+    text:
+      path: stdout
 
 linters:
+  default: standard
   enable:
-    # Default linters
-    - errcheck
-    - gosimple
-    - govet
-    - ineffassign
-    - staticcheck
-    - unused
-
-    # Additional linters
-    - bodyclose # Checks whether HTTP response body is closed successfully
-    - contextcheck # Check functions for context.Context propagation
-    - dogsled # Checks assignments with too many blank identifiers
-    - dupl # Tool for code clone detection
-    - durationcheck # Check for two durations multiplied together
-    - errname # Checks that sentinel errors are prefixed with Err
-    - errorlint # Finds code that will cause problems with Go 1.13 error wrapping
-    - exhaustive # Check exhaustiveness of enum switch statements
-    - copyloopvar # Checks for pointers to enclosing loop variables (Go 1.22+)
-    - gochecknoinits # Checks that no init functions are present
-    - goconst # Finds repeated strings that could be replaced by a constant
-    - gocritic # Provides diagnostics that check for bugs, performance and style issues
-    - gocyclo # Computes and checks the cyclomatic complexity
-    - gofmt # Checks whether code was gofmt-ed
-    - goimports # In addition to fixing imports, goimports also formats code
-    - goprintffuncname # Checks that printf-like functions are named with 'f' at the end
-    - gosec # Inspects source code for security problems
-    - misspell # Finds commonly misspelled English words in comments
-    - nakedret # Finds naked returns in functions greater than a specified function length
-    - nestif # Reports deeply nested if statements
-    - nilerr # Finds code that returns nil even if it checks that the error is not nil
-    - nilnil # Checks that there is no simultaneous return of nil error and invalid value
-    - noctx # noctx finds sending http request without context.Context
-    - revive # Fast, configurable, extensible linter for Go
-    - rowserrcheck # Checks whether Err of rows is checked successfully
-    - sqlclosecheck # Checks that sql.Rows and sql.Stmt are closed
-    - stylecheck # Stylecheck is a replacement for golint
-    - unconvert # Remove unnecessary type conversions
-    - whitespace # Tool for detection of leading and trailing whitespace
+    - bodyclose
+    - contextcheck
+    - dogsled
+    - dupl
+    - durationcheck
+    - errname
+    - errorlint
+    - exhaustive
+    - copyloopvar
+    - gochecknoinits
+    - goconst
+    - gocritic
+    - gocyclo
+    - goimports
+    - goprintffuncname
+    - gosec
+    - misspell
+    - nakedret
+    - nestif
+    - nilerr
+    - nilnil
+    - noctx
+    - revive
+    - rowserrcheck
+    - sqlclosecheck
+    - unconvert
+    - whitespace
 
   disable:
-    - funlen # Tool for detection of long functions
-    - gocognit # Computes cognitive complexity
-    - godox # Tool for detection of FIXME, TODO and other comment keywords
-    - lll # Reports long lines
-    - wsl # Whitespace Linter - Forces use of empty lines
-    - godot # Comment periods - too noisy for this project
-    - mnd # Magic numbers - too strict
-    - wrapcheck # Error wrapping - too strict for Echo handlers
-    - prealloc # Pre-allocation - optimization only
-    - tparallel # Test parallel - too strict for sub-tests
-    - unparam # Unused params - false positives
-    - predeclared # Shadows predeclared - handled by govet
+    - funlen
+    - gocognit
+    - godox
+    - lll
+    - wsl
+    - godot
+    - mnd
+    - wrapcheck
+    - prealloc
+    - tparallel
+    - unparam
+    - predeclared
 
-linters-settings:
-  errcheck:
-    check-type-assertions: true
-    check-blank: false
-    exclude-functions:
-      - io/ioutil.ReadFile
-      - io.Copy(*bytes.Buffer)
-      - encoding/json.Marshal
-      - encoding/json.MarshalIndent
-      - (github.com/labstack/echo/v4.Context).JSON
-      - (github.com/labstack/echo/v4.Context).NoContent
-      - (*encoding/json.Encoder).Encode
+  settings:
+    errcheck:
+      check-type-assertions: true
+      check-blank: false
 
-  govet:
-    enable-all: true
-    disable:
-      - fieldalignment # Too strict for this project
-      - shadow # Too many false positives
+    govet:
+      enable-all: true
+      disable:
+        - fieldalignment
+        - shadow
 
-  gocyclo:
-    min-complexity: 15
+    gocyclo:
+      min-complexity: 15
 
-  goconst:
-    min-len: 3
-    min-occurrences: 3
+    goconst:
+      min-len: 3
+      min-occurrences: 3
 
-  gocritic:
-    enabled-tags:
-      - diagnostic
-      - performance
-      - style
-    disabled-checks:
-      - whyNoLint
-      - commentedOutCode
-      - unnecessaryBlock
-      - exitAfterDefer
-      - httpNoBody
-      - ifElseChain
-      - emptyStringTest
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - performance
+        - style
+      disabled-checks:
+        - whyNoLint
+        - commentedOutCode
+        - unnecessaryBlock
+        - exitAfterDefer
+        - httpNoBody
+        - ifElseChain
+        - emptyStringTest
 
-  goimports:
-    local-prefixes: github.com/zareh/go-api-starter
+    goimports:
+      local-prefixes:
+        - github.com/zareh/go-api-starter
 
-  gosec:
-    includes:
-      - G101 # Look for hardcoded credentials
-      - G102 # Bind to all interfaces
-      - G103 # Audit the use of unsafe block
-      - G104 # Audit errors not checked
-      - G106 # Audit the use of ssh.InsecureIgnoreHostKey
-      - G107 # Url provided to HTTP request as taint input
-      - G108 # Profiling endpoint is automatically exposed
-      - G109 # Potential Integer overflow
-      - G110 # Potential DoS vulnerability via decompression bomb
-      - G201 # SQL query construction using format string
-      - G202 # SQL query construction using string concatenation
-      - G203 # Use of unescaped data in HTML templates
-      - G204 # Audit use of command execution
-      - G301 # Poor file permissions used when creating a directory
-      - G302 # Poor file permissions used with chmod
-      - G303 # Creating tempfile using a predictable path
-      - G304 # File path provided as taint input
-      - G305 # File traversal when extracting zip/tar archive
-      - G306 # Poor file permissions used when writing to a new file
-      - G401 # Detect use of DES, RC4, MD5 or SHA1
-      - G402 # Look for bad TLS connection settings
-      - G403 # Ensure minimum RSA key length of 2048 bits
-      - G404 # Insecure random number source (rand)
-      - G501 # Import blocklist: crypto/md5
-      - G502 # Import blocklist: crypto/des
-      - G503 # Import blocklist: crypto/rc4
-      - G504 # Import blocklist: net/http/cgi
-      - G505 # Import blocklist: crypto/sha1
-      - G601 # Implicit memory aliasing in for loop
+    misspell:
+      locale: US
 
-  misspell:
-    locale: US
-    ignore-words:
-      - cancelled
+    nestif:
+      min-complexity: 4
 
-  nestif:
-    min-complexity: 4
-
-  prealloc:
-    simple: true
-    range-loops: true
-    for-loops: true
-
-  revive:
-    rules:
-      - name: context-as-argument
-      - name: context-keys-type
-      - name: dot-imports
-      - name: error-return
-      - name: error-strings
-      - name: error-naming
-      - name: exported
-      - name: if-return
-      - name: increment-decrement
-      - name: var-naming
-      - name: var-declaration
-      - name: range
-      - name: receiver-naming
-      - name: time-naming
-      - name: unexported-return
-      - name: indent-error-flow
-      - name: errorf
-      - name: superfluous-else
-      - name: unreachable-code
-
-  stylecheck:
-    checks:
-      ["all", "-ST1000", "-ST1003", "-ST1016", "-ST1020", "-ST1021", "-ST1022"]
-
-  unparam:
-    check-exported: false
-
-  wrapcheck:
-    ignoreSigs:
-      - .Errorf(
-      - errors.New(
-      - errors.Unwrap(
-      - .Wrap(
-      - .Wrapf(
-      - .WithMessage(
-      - .WithMessagef(
-      - .WithStack(
+    revive:
+      rules:
+        - name: context-as-argument
+        - name: context-keys-type
+        - name: dot-imports
+        - name: error-return
+        - name: error-strings
+        - name: error-naming
+        - name: exported
+        - name: if-return
+        - name: increment-decrement
+        - name: var-naming
+        - name: var-declaration
+        - name: range
+        - name: receiver-naming
+        - name: time-naming
+        - name: unexported-return
+        - name: indent-error-flow
+        - name: errorf
+        - name: superfluous-else
+        - name: unreachable-code
 
 issues:
   uniq-by-line: true
-  exclude-rules:
-    # Exclude some linters from running on tests files.
-    - path: _test\.go
-      linters:
-        - gocyclo
-        - errcheck
-        - dupl
-        - gosec
-        - goconst
-        - errorlint
-        - staticcheck
-
-    # Exclude known linter issues for specific files
-    - path: cmd/server/main\.go
-      linters:
-        - gochecknoinits
-
-    # Exclude shadow checking on err
-    - text: 'shadow: declaration of "err"'
-      linters:
-        - govet
-
-    # Exclude errorlint for simple error comparisons
-    - text: "comparing with"
-      linters:
-        - errorlint
-
-    # Exclude errorlint for type assertions
-    - text: "type assertion on error"
-      linters:
-        - errorlint
-
-    # Exclude gosec G101 for test/example credentials
-    - text: "G101:"
-      linters:
-        - gosec
-
-    # Exclude gosec G404 for non-crypto random
-    - text: "G404:"
-      linters:
-        - gosec
-
-    # Exclude exhaustive for simple switches
-    - path: pkg/
-      text: "missing cases in switch"
-      linters:
-        - exhaustive
-
-    # Exclude stuttering warning for retry package
-    - path: pkg/retry/
-      text: "stutters"
-      linters:
-        - revive
-
   max-issues-per-linter: 0
   max-same-issues: 0
-  new: false
 
 severity:
-  default-severity: warning
+  default: warning
   rules:
     - linters:
         - govet
