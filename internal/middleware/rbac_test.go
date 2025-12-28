@@ -8,6 +8,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
+
 	"github.com/zareh/go-api-starter/internal/middleware"
 	"github.com/zareh/go-api-starter/pkg/rbac"
 )

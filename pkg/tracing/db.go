@@ -25,7 +25,7 @@ func NewDBTracer(serviceName, dbName string) *DBTracer {
 }
 
 // TraceQuery traces a database query operation.
-func (t *DBTracer) TraceQuery(ctx context.Context, operation, table, query string) (context.Context, func(error)) {
+func (t *DBTracer) TraceQuery(ctx context.Context, operation, table, query string) (newCtx context.Context, finish func(error)) {
 	spanName := operation + " " + table
 	ctx, span := t.tracer.Start(ctx, spanName,
 		trace.WithSpanKind(trace.SpanKindClient),
@@ -54,7 +54,7 @@ func (t *DBTracer) TraceQuery(ctx context.Context, operation, table, query strin
 }
 
 // TraceCreate traces a CREATE operation.
-func (t *DBTracer) TraceCreate(ctx context.Context, table string, resourceID int64) (context.Context, func(error)) {
+func (t *DBTracer) TraceCreate(ctx context.Context, table string, resourceID int64) (newCtx context.Context, finish func(error)) {
 	ctx, span := t.tracer.Start(ctx, "INSERT "+table,
 		trace.WithSpanKind(trace.SpanKindClient),
 		trace.WithAttributes(
@@ -77,7 +77,7 @@ func (t *DBTracer) TraceCreate(ctx context.Context, table string, resourceID int
 }
 
 // TraceRead traces a READ operation.
-func (t *DBTracer) TraceRead(ctx context.Context, table string, resourceID int64) (context.Context, func(error)) {
+func (t *DBTracer) TraceRead(ctx context.Context, table string, resourceID int64) (newCtx context.Context, finish func(error)) {
 	ctx, span := t.tracer.Start(ctx, "SELECT "+table,
 		trace.WithSpanKind(trace.SpanKindClient),
 		trace.WithAttributes(
@@ -100,7 +100,7 @@ func (t *DBTracer) TraceRead(ctx context.Context, table string, resourceID int64
 }
 
 // TraceUpdate traces an UPDATE operation.
-func (t *DBTracer) TraceUpdate(ctx context.Context, table string, resourceID int64) (context.Context, func(error)) {
+func (t *DBTracer) TraceUpdate(ctx context.Context, table string, resourceID int64) (newCtx context.Context, finish func(error)) {
 	ctx, span := t.tracer.Start(ctx, "UPDATE "+table,
 		trace.WithSpanKind(trace.SpanKindClient),
 		trace.WithAttributes(
@@ -123,7 +123,7 @@ func (t *DBTracer) TraceUpdate(ctx context.Context, table string, resourceID int
 }
 
 // TraceDelete traces a DELETE operation.
-func (t *DBTracer) TraceDelete(ctx context.Context, table string, resourceID int64) (context.Context, func(error)) {
+func (t *DBTracer) TraceDelete(ctx context.Context, table string, resourceID int64) (newCtx context.Context, finish func(error)) {
 	ctx, span := t.tracer.Start(ctx, "DELETE "+table,
 		trace.WithSpanKind(trace.SpanKindClient),
 		trace.WithAttributes(
@@ -146,7 +146,7 @@ func (t *DBTracer) TraceDelete(ctx context.Context, table string, resourceID int
 }
 
 // TraceList traces a LIST operation.
-func (t *DBTracer) TraceList(ctx context.Context, table string, limit, offset int) (context.Context, func(error, int)) {
+func (t *DBTracer) TraceList(ctx context.Context, table string, limit, offset int) (newCtx context.Context, finish func(error, int)) {
 	ctx, span := t.tracer.Start(ctx, "SELECT ALL "+table,
 		trace.WithSpanKind(trace.SpanKindClient),
 		trace.WithAttributes(
@@ -171,7 +171,7 @@ func (t *DBTracer) TraceList(ctx context.Context, table string, limit, offset in
 }
 
 // TraceTransaction traces a database transaction.
-func (t *DBTracer) TraceTransaction(ctx context.Context, name string) (context.Context, func(error)) {
+func (t *DBTracer) TraceTransaction(ctx context.Context, name string) (newCtx context.Context, finish func(error)) {
 	ctx, span := t.tracer.Start(ctx, "TX "+name,
 		trace.WithSpanKind(trace.SpanKindClient),
 		trace.WithAttributes(

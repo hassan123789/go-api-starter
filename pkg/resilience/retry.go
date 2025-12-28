@@ -41,11 +41,11 @@ type BackoffStrategy interface {
 
 // ConstantBackoff returns a constant delay.
 type ConstantBackoff struct {
-	Delay_ time.Duration
+	DelayDuration time.Duration
 }
 
 func (b *ConstantBackoff) Delay(_ int) time.Duration {
-	return b.Delay_
+	return b.DelayDuration
 }
 
 // ExponentialBackoff returns exponentially increasing delays.

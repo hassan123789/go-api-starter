@@ -9,6 +9,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	"github.com/zareh/go-api-starter/pkg/resilience"
 )
 
@@ -167,7 +168,7 @@ func TestRetryer_Success(t *testing.T) {
 func TestRetryer_SuccessAfterRetries(t *testing.T) {
 	r := resilience.NewRetryer(
 		resilience.WithMaxAttempts(3),
-		resilience.WithBackoff(&resilience.ConstantBackoff{Delay_: 10 * time.Millisecond}),
+		resilience.WithBackoff(&resilience.ConstantBackoff{DelayDuration: 10 * time.Millisecond}),
 	)
 
 	var attempts int32
@@ -185,7 +186,7 @@ func TestRetryer_SuccessAfterRetries(t *testing.T) {
 func TestRetryer_MaxAttemptsExceeded(t *testing.T) {
 	r := resilience.NewRetryer(
 		resilience.WithMaxAttempts(3),
-		resilience.WithBackoff(&resilience.ConstantBackoff{Delay_: 1 * time.Millisecond}),
+		resilience.WithBackoff(&resilience.ConstantBackoff{DelayDuration: 1 * time.Millisecond}),
 	)
 
 	testErr := errors.New("persistent error")
@@ -203,7 +204,7 @@ func TestRetryer_MaxAttemptsExceeded(t *testing.T) {
 func TestRetryer_ContextCancelled(t *testing.T) {
 	r := resilience.NewRetryer(
 		resilience.WithMaxAttempts(10),
-		resilience.WithBackoff(&resilience.ConstantBackoff{Delay_: 100 * time.Millisecond}),
+		resilience.WithBackoff(&resilience.ConstantBackoff{DelayDuration: 100 * time.Millisecond}),
 	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)

@@ -48,7 +48,7 @@ func Update(t *testing.T, name string, data []byte) {
 
 	// Create directory if it doesn't exist
 	dir := filepath.Dir(path)
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := os.MkdirAll(dir, 0o755); err != nil {
 		t.Fatalf("failed to create golden directory: %v", err)
 	}
 
@@ -64,7 +64,7 @@ func Update(t *testing.T, name string, data []byte) {
 		formatted = data
 	}
 
-	if err := os.WriteFile(path, formatted, 0644); err != nil {
+	if err := os.WriteFile(path, formatted, 0o600); err != nil {
 		t.Fatalf("failed to write golden file: %v", err)
 	}
 

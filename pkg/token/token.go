@@ -35,8 +35,8 @@ type Claims struct {
 	TokenType string `json:"token_type"`
 }
 
-// TokenPair represents an access/refresh token pair.
-type TokenPair struct {
+// Pair represents an access/refresh token pair.
+type Pair struct {
 	AccessToken  string    `json:"access_token"`
 	RefreshToken string    `json:"refresh_token"`
 	TokenType    string    `json:"token_type"`
@@ -106,7 +106,7 @@ func NewManager(accessSecret, refreshSecret string, opts ...ManagerOption) *Mana
 }
 
 // GenerateTokenPair generates both access and refresh tokens.
-func (m *Manager) GenerateTokenPair(userID int64, email, role string) (*TokenPair, error) {
+func (m *Manager) GenerateTokenPair(userID int64, email, role string) (*Pair, error) {
 	now := time.Now()
 
 	// Generate access token
@@ -121,7 +121,7 @@ func (m *Manager) GenerateTokenPair(userID int64, email, role string) (*TokenPai
 		return nil, fmt.Errorf("failed to generate refresh token: %w", err)
 	}
 
-	return &TokenPair{
+	return &Pair{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 		TokenType:    "Bearer",
@@ -174,7 +174,7 @@ func (m *Manager) validateToken(tokenString, expectedType string, secret []byte)
 		if errors.Is(err, jwt.ErrTokenExpired) {
 			return nil, ErrExpiredToken
 		}
-		return nil, fmt.Errorf("%w: %v", ErrInvalidToken, err)
+		return nil, fmt.Errorf("%w: %w", ErrInvalidToken, err)
 	}
 
 	claims, ok := token.Claims.(*Claims)
@@ -191,7 +191,7 @@ func (m *Manager) validateToken(tokenString, expectedType string, secret []byte)
 }
 
 // RefreshAccessToken generates a new access token using a valid refresh token.
-func (m *Manager) RefreshAccessToken(refreshToken string) (*TokenPair, error) {
+func (m *Manager) RefreshAccessToken(refreshToken string) (*Pair, error) {
 	claims, err := m.ValidateRefreshToken(refreshToken)
 	if err != nil {
 		return nil, err
@@ -213,7 +213,7 @@ func (m *Manager) GetRefreshExpiry() time.Duration {
 // generateTokenID generates a unique token ID.
 func generateTokenID() string {
 	b := make([]byte, 16)
-	rand.Read(b)
+	_, _ = rand.Read(b) // crypto/rand.Read always succeeds on supported platforms
 	return base64.RawURLEncoding.EncodeToString(b)
 }
 

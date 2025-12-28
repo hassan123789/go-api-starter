@@ -30,16 +30,16 @@ type PostgresContainer struct {
 var (
 	pgContainer *PostgresContainer
 	pgOnce      sync.Once
-	pgErr       error
+	errPG       error
 )
 
 // GetPostgresContainer returns a shared PostgreSQL container for tests.
 // The container is started once and reused across all tests.
 func GetPostgresContainer(ctx context.Context) (*PostgresContainer, error) {
 	pgOnce.Do(func() {
-		pgContainer, pgErr = startPostgresContainer(ctx)
+		pgContainer, errPG = startPostgresContainer(ctx)
 	})
-	return pgContainer, pgErr
+	return pgContainer, errPG
 }
 
 func startPostgresContainer(ctx context.Context) (*PostgresContainer, error) {
@@ -213,7 +213,7 @@ func TestMain(m *testing.M) {
 
 	// Cleanup
 	if container != nil {
-		container.Stop(ctx)
+		_ = container.Stop(ctx)
 	}
 
 	os.Exit(code)
