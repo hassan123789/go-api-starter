@@ -420,6 +420,81 @@ make db-shell       # Open psql shell
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
+## 🧰 開発ツール
+
+### Dev Container（推奨）
+
+VS Code で開発環境を一発構築：
+
+```bash
+# VS Code で開く → "Reopen in Container" を選択
+code .
+```
+
+自動でセットアップされるもの：
+- Go 1.22+
+- golangci-lint
+- sqlc
+- air (ホットリロード)
+- PostgreSQL クライアント
+- VS Code 拡張機能
+
+### Taskfile（モダンなMake代替）
+
+```bash
+# Taskfileをインストール
+go install github.com/go-task/task/v3/cmd/task@latest
+
+# タスク一覧を表示
+task
+
+# よく使うコマンド
+task build          # ビルド
+task test           # テスト
+task lint           # Lint
+task docker:up      # Docker起動
+task check          # 全チェック実行
+```
+
+### Pre-commit Hooks
+
+コミット前に自動でコード品質チェック：
+
+```bash
+# pre-commit をインストール（Python必須）
+pip install pre-commit
+
+# フックをセットアップ
+pre-commit install
+pre-commit install --hook-type commit-msg
+
+# 手動で全ファイルをチェック
+pre-commit run --all-files
+```
+
+### API テスト
+
+**VS Code REST Client:**
+```bash
+# docs/api.http を VS Code で開いて実行
+```
+
+**Postman:**
+```bash
+# docs/Go API Starter.postman_collection.json をインポート
+```
+
+## 📚 Architecture Decision Records (ADR)
+
+主要な設計判断とその理由を記録しています：
+
+| ADR | タイトル |
+|-----|---------|
+| [001](docs/adr/001-use-clean-architecture.md) | Clean Architectureの採用 |
+| [002](docs/adr/002-choose-echo-framework.md) | Echo Frameworkの選定 |
+| [003](docs/adr/003-jwt-authentication-strategy.md) | JWT認証戦略 |
+| [004](docs/adr/004-error-handling-approach.md) | エラーハンドリング設計 |
+
 ## 📄 License
 
 MIT License - see [LICENSE](LICENSE) for details.

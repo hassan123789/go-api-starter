@@ -1,0 +1,277 @@
+# https://taskfile.dev
+version: '3'
+
+vars:
+  PROJECT_NAME: go-api-starter
+  BINARY_NAME: server
+  VERSION:
+    sh: git describe --tags --always --dirty 2>/dev/null || echo "dev"
+  BUILD_TIME:
+    sh: date -u +"%Y-%m-%dT%H:%M:%SZ"
+  GIT_COMMIT:
+    sh: git rev-parse --short HEAD 2>/dev/null || echo "unknown"
+  DOCKER_IMAGE: '{{.PROJECT_NAME}}'
+  DOCKER_TAG: '{{.VERSION}}'
+  COVERAGE_DIR: coverage
+
+env:
+  CGO_ENABLED: '0'
+
+tasks:
+  # ============================================================
+  # デフォルト: ヘルプ表示
+  # ============================================================
+  default:
+    desc: 利用可能なタスク一覧を表示
+    cmds:
+      - task --list-all
+
+  # ============================================================
+  # ビルド & 実行
+  # ============================================================
+  build:
+    desc: アプリケーションをビルド
+    cmds:
+      - mkdir -p bin
+      - go build -v -ldflags "-s -w -X main.version={{.VERSION}} -X main.buildTime={{.BUILD_TIME}}" -o bin/{{.BINARY_NAME}} ./cmd/server
+    sources:
+      - ./**/*.go
+    generates:
+      - bin/{{.BINARY_NAME}}
+
+  build:all:
+    desc: 複数プラットフォーム向けにビルド
+    cmds:
+      - mkdir -p bin
+      - GOOS=linux GOARCH=amd64 go build -ldflags "-s -w" -o bin/{{.BINARY_NAME}}-linux-amd64 ./cmd/server
+      - GOOS=darwin GOARCH=amd64 go build -ldflags "-s -w" -o bin/{{.BINARY_NAME}}-darwin-amd64 ./cmd/server
+      - GOOS=darwin GOARCH=arm64 go build -ldflags "-s -w" -o bin/{{.BINARY_NAME}}-darwin-arm64 ./cmd/server
+      - GOOS=windows GOARCH=amd64 go build -ldflags "-s -w" -o bin/{{.BINARY_NAME}}-windows-amd64.exe ./cmd/server
+
+  run:
+    desc: アプリケーションを実行
+    deps: [build]
+    cmds:
+      - ./bin/{{.BINARY_NAME}}
+
+  run:dev:
+    desc: ホットリロード付きで開発実行 (air)
+    cmds:
+      - air -c .air.toml
+
+  clean:
+    desc: ビルド成果物を削除
+    cmds:
+      - rm -rf bin/ {{.COVERAGE_DIR}}/
+      - go clean -cache -testcache
+
+  # ============================================================
+  # テスト
+  # ============================================================
+  test:
+    desc: 全テストを実行 (race検出付き)
+    cmds:
+      - go test -v -race ./...
+
+  test:short:
+    desc: ショートテストのみ実行
+    cmds:
+      - go test -v -short ./...
+
+  test:coverage:
+    desc: カバレッジ付きでテスト実行
+    cmds:
+      - mkdir -p {{.COVERAGE_DIR}}
+      - go test -v -race -coverprofile={{.COVERAGE_DIR}}/coverage.out -covermode=atomic ./...
+      - go tool cover -html={{.COVERAGE_DIR}}/coverage.out -o {{.COVERAGE_DIR}}/coverage.html
+      - go tool cover -func={{.COVERAGE_DIR}}/coverage.out
+    generates:
+      - '{{.COVERAGE_DIR}}/coverage.out'
+      - '{{.COVERAGE_DIR}}/coverage.html'
+
+  test:bench:
+    desc: ベンチマークテストを実行
+    cmds:
+      - go test -bench=. -benchmem ./...
+
+  test:integration:
+    desc: 統合テストを実行
+    cmds:
+      - go test -v -tags=integration ./...
+
+  # ============================================================
+  # コード品質
+  # ============================================================
+  lint:
+    desc: golangci-lint を実行
+    cmds:
+      - golangci-lint run --timeout 5m
+
+  lint:fix:
+    desc: golangci-lint で自動修正
+    cmds:
+      - golangci-lint run --fix
+
+  fmt:
+    desc: コードをフォーマット
+    cmds:
+      - go fmt ./...
+      - goimports -w .
+
+  vet:
+    desc: go vet を実行
+    cmds:
+      - go vet ./...
+
+  sec:
+    desc: セキュリティチェック (gosec)
+    cmds:
+      - gosec -quiet ./...
+
+  check:
+    desc: 全てのコード品質チェックを実行
+    cmds:
+      - task: fmt
+      - task: vet
+      - task: lint
+      - task: test
+
+  # ============================================================
+  # Docker
+  # ============================================================
+  docker:up:
+    desc: Docker Compose で起動
+    cmds:
+      - docker compose up -d
+
+  docker:down:
+    desc: Docker Compose を停止
+    cmds:
+      - docker compose down
+
+  docker:logs:
+    desc: Docker ログを表示
+    cmds:
+      - docker compose logs -f
+
+  docker:build:
+    desc: Docker イメージをビルド
+    cmds:
+      - docker build -t {{.DOCKER_IMAGE}}:{{.DOCKER_TAG}} .
+      - docker tag {{.DOCKER_IMAGE}}:{{.DOCKER_TAG}} {{.DOCKER_IMAGE}}:latest
+
+  docker:push:
+    desc: Docker イメージをプッシュ
+    cmds:
+      - docker push {{.DOCKER_IMAGE}}:{{.DOCKER_TAG}}
+      - docker push {{.DOCKER_IMAGE}}:latest
+
+  # ============================================================
+  # データベース
+  # ============================================================
+  db:migrate:
+    desc: マイグレーションを実行
+    cmds:
+      - migrate -path db/migrations -database "$(grep DATABASE_URL .env | cut -d '=' -f2)" up
+
+  db:migrate:down:
+    desc: マイグレーションをロールバック
+    cmds:
+      - migrate -path db/migrations -database "$(grep DATABASE_URL .env | cut -d '=' -f2)" down 1
+
+  db:migrate:status:
+    desc: マイグレーション状態を表示
+    cmds:
+      - migrate -path db/migrations -database "$(grep DATABASE_URL .env | cut -d '=' -f2)" version
+
+  db:shell:
+    desc: PostgreSQL シェルを開く
+    cmds:
+      - docker compose exec postgres psql -U postgres -d go_api_starter
+
+  sqlc:
+    desc: sqlc コードを生成
+    cmds:
+      - sqlc generate
+
+  # ============================================================
+  # 開発ツール
+  # ============================================================
+  setup:
+    desc: 開発環境をセットアップ
+    cmds:
+      - task: install:tools
+      - go mod download
+      - cp -n .env.example .env || true
+      - task: docker:up
+      - sleep 3
+      - task: db:migrate
+
+  install:tools:
+    desc: 開発ツールをインストール
+    cmds:
+      - go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+      - go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+      - go install github.com/air-verse/air@latest
+      - go install github.com/vektra/mockery/v2@latest
+      - go install github.com/securego/gosec/v2/cmd/gosec@latest
+      - go install golang.org/x/tools/cmd/goimports@latest
+
+  tidy:
+    desc: go mod tidy を実行
+    cmds:
+      - go mod tidy
+      - go mod verify
+
+  mock:gen:
+    desc: モックを生成
+    cmds:
+      - mockery --all --keeptree --output=./internal/mocks
+
+  docs:
+    desc: Swagger UI を起動
+    cmds:
+      - echo "Opening Swagger UI at http://localhost:8080/swagger/index.html"
+      - open http://localhost:8080/swagger/index.html 2>/dev/null || xdg-open http://localhost:8080/swagger/index.html 2>/dev/null || echo "Please open http://localhost:8080/swagger/index.html"
+
+  # ============================================================
+  # Pre-commit
+  # ============================================================
+  pre-commit:install:
+    desc: pre-commit をインストール
+    cmds:
+      - pre-commit install
+      - pre-commit install --hook-type commit-msg
+
+  pre-commit:run:
+    desc: pre-commit を全ファイルに実行
+    cmds:
+      - pre-commit run --all-files
+
+  # ============================================================
+  # リリース
+  # ============================================================
+  changelog:
+    desc: CHANGELOG を生成
+    cmds:
+      - git cliff -o CHANGELOG.md
+
+  release:
+    desc: リリースを作成
+    cmds:
+      - task: check
+      - task: build:all
+      - echo "Ready for release {{.VERSION}}"
+
+  # ============================================================
+  # 情報表示
+  # ============================================================
+  info:
+    desc: プロジェクト情報を表示
+    cmds:
+      - echo "Project    {{.PROJECT_NAME}}"
+      - echo "Version    {{.VERSION}}"
+      - echo "Commit     {{.GIT_COMMIT}}"
+      - echo "Build Time {{.BUILD_TIME}}"
+      - echo ""
+      - echo "Go Version $(go version)"

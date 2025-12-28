@@ -1,0 +1,510 @@
+{
+  "info": {
+    "_postman_id": "go-api-starter-collection",
+    "name": "Go API Starter",
+    "description": "JWT認証付きTODO管理REST API\n\n## 使い方\n\n1. 「1. ユーザー登録」でアカウント作成\n2. 「2. ログイン」でJWTトークン取得（自動で変数にセット）\n3. TODO APIを使用\n\n## 環境変数\n\n- `base_url`: APIのベースURL（デフォルト: http://localhost:8080）\n- `token`: JWTトークン（ログイン時に自動セット）",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user_email",
+      "value": "test@example.com",
+      "type": "string"
+    },
+    {
+      "key": "user_password",
+      "value": "password123",
+      "type": "string"
+    },
+    {
+      "key": "todo_id",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            },
+            "description": "サーバーの稼働状態を確認します"
+          },
+          "response": []
+        },
+        {
+          "name": "Readiness Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health/ready",
+              "host": ["{{base_url}}"],
+              "path": ["health", "ready"]
+            },
+            "description": "サービスの準備状態を確認します（DB接続等）"
+          },
+          "response": []
+        }
+      ],
+      "description": "ヘルスチェックエンドポイント"
+    },
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "1. ユーザー登録",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has user data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('id');",
+                  "    pm.expect(jsonData).to.have.property('email');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{user_email}}\",\n  \"password\": \"{{user_password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/users",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "users"]
+            },
+            "description": "新規ユーザーを登録します\n\n**リクエストボディ:**\n- `email`: メールアドレス（必須）\n- `password`: パスワード（8文字以上、必須）"
+          },
+          "response": []
+        },
+        {
+          "name": "2. ログイン",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has token\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('token');",
+                  "    ",
+                  "    // トークンを変数にセット",
+                  "    pm.collectionVariables.set('token', jsonData.token);",
+                  "    console.log('Token saved to collection variable');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{user_email}}\",\n  \"password\": \"{{user_password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "login"]
+            },
+            "description": "ログインしてJWTトークンを取得します\n\n**成功時:** トークンは自動的にコレクション変数 `token` にセットされます"
+          },
+          "response": []
+        }
+      ],
+      "description": "認証関連のエンドポイント"
+    },
+    {
+      "name": "Todos",
+      "item": [
+        {
+          "name": "TODO一覧取得",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has todos array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('todos');",
+                  "    pm.expect(jsonData.todos).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/todos",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "todos"]
+            },
+            "description": "認証ユーザーのTODO一覧を取得します"
+          },
+          "response": []
+        },
+        {
+          "name": "TODO作成",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has todo data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('id');",
+                  "    pm.expect(jsonData).to.have.property('title');",
+                  "    ",
+                  "    // 作成されたTODOのIDを保存",
+                  "    pm.collectionVariables.set('todo_id', jsonData.id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Learn Go\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/todos",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "todos"]
+            },
+            "description": "新規TODOを作成します\n\n**リクエストボディ:**\n- `title`: TODOのタイトル（必須、最大255文字）"
+          },
+          "response": []
+        },
+        {
+          "name": "TODO詳細取得",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has todo data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('id');",
+                  "    pm.expect(jsonData).to.have.property('title');",
+                  "    pm.expect(jsonData).to.have.property('completed');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/todos/{{todo_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "todos", "{{todo_id}}"]
+            },
+            "description": "指定IDのTODOを取得します"
+          },
+          "response": []
+        },
+        {
+          "name": "TODO更新",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Todo is updated\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.title).to.eql('Learn Go and Echo');",
+                  "    pm.expect(jsonData.completed).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Learn Go and Echo\",\n  \"completed\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/todos/{{todo_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "todos", "{{todo_id}}"]
+            },
+            "description": "指定IDのTODOを更新します\n\n**リクエストボディ:**\n- `title`: TODOのタイトル（任意）\n- `completed`: 完了状態（任意）"
+          },
+          "response": []
+        },
+        {
+          "name": "TODO削除",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 204\", function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/todos/{{todo_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "todos", "{{todo_id}}"]
+            },
+            "description": "指定IDのTODOを削除します"
+          },
+          "response": []
+        }
+      ],
+      "description": "TODO管理エンドポイント（認証必須）"
+    },
+    {
+      "name": "Error Cases",
+      "item": [
+        {
+          "name": "認証なしでアクセス",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 401\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/todos",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "todos"]
+            },
+            "description": "認証なしでTODO APIにアクセスした場合のエラーレスポンス"
+          },
+          "response": []
+        },
+        {
+          "name": "不正なログイン情報",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 401\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has error message\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('error');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"wrong@example.com\",\n  \"password\": \"wrongpassword\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "login"]
+            },
+            "description": "間違った認証情報でログインした場合"
+          },
+          "response": []
+        },
+        {
+          "name": "存在しないTODO取得",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/todos/99999",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "todos", "99999"]
+            },
+            "description": "存在しないTODOを取得しようとした場合"
+          },
+          "response": []
+        },
+        {
+          "name": "バリデーションエラー",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/todos",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "todos"]
+            },
+            "description": "空のタイトルでTODOを作成しようとした場合"
+          },
+          "response": []
+        }
+      ],
+      "description": "エラーケースのテスト"
+    }
+  ]
+}

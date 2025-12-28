@@ -1,0 +1,82 @@
+{
+  "name": "Go API Starter",
+  "dockerComposeFile": "../docker-compose.yml",
+  "service": "devcontainer",
+  "workspaceFolder": "/workspace",
+
+  "features": {
+    "ghcr.io/devcontainers/features/go:1": {
+      "version": "1.22"
+    },
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "version": "latest"
+    },
+    "ghcr.io/devcontainers/features/git:1": {
+      "version": "latest"
+    }
+  },
+
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "go.useLanguageServer": true,
+        "go.lintTool": "golangci-lint",
+        "go.lintFlags": ["--fast"],
+        "go.formatTool": "goimports",
+        "go.testFlags": ["-v", "-race"],
+        "go.coverOnSave": true,
+        "go.coverageDecorator": {
+          "type": "highlight",
+          "coveredHighlightColor": "rgba(64,128,64,0.2)",
+          "uncoveredHighlightColor": "rgba(128,64,64,0.2)"
+        },
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+          "source.organizeImports": "explicit"
+        },
+        "[go]": {
+          "editor.defaultFormatter": "golang.go"
+        },
+        "terminal.integrated.defaultProfile.linux": "bash"
+      },
+      "extensions": [
+        "golang.go",
+        "ms-azuretools.vscode-docker",
+        "eamodio.gitlens",
+        "usernamehw.errorlens",
+        "streetsidesoftware.code-spell-checker",
+        "redhat.vscode-yaml",
+        "ms-vscode.makefile-tools",
+        "task.vscode-task",
+        "humao.rest-client",
+        "42Crunch.vscode-openapi",
+        "mtxr.sqltools",
+        "mtxr.sqltools-driver-pg"
+      ]
+    }
+  },
+
+  "forwardPorts": [8080, 5432, 9090, 3000],
+  "portsAttributes": {
+    "8080": { "label": "API Server", "onAutoForward": "notify" },
+    "5432": { "label": "PostgreSQL", "onAutoForward": "silent" },
+    "9090": { "label": "Prometheus", "onAutoForward": "silent" },
+    "3000": { "label": "Grafana", "onAutoForward": "silent" }
+  },
+
+  "postCreateCommand": "go mod download && go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest && go install github.com/go-task/task/v3/cmd/task@latest",
+
+  "postStartCommand": "docker compose up -d postgres",
+
+  "remoteUser": "vscode",
+
+  "mounts": [
+    "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
+    "source=go-mod-cache,target=/go/pkg/mod,type=volume"
+  ],
+
+  "containerEnv": {
+    "GOPATH": "/go",
+    "GOMODCACHE": "/go/pkg/mod"
+  }
+}

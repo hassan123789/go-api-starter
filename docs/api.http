@@ -1,0 +1,164 @@
+# Go API Starter - REST Client
+# VS Code REST Client Extension用
+# https://marketplace.visualstudio.com/items?itemName=humao.rest-client
+
+###########################################################
+# 変数定義
+###########################################################
+
+@baseUrl = http://localhost:8080
+@contentType = application/json
+
+# ログイン後に取得したトークンをここに設定
+@token = YOUR_TOKEN_HERE
+
+
+###########################################################
+# Health Check
+###########################################################
+
+### ヘルスチェック
+GET {{baseUrl}}/health
+
+### Readiness チェック
+GET {{baseUrl}}/health/ready
+
+
+###########################################################
+# Authentication
+###########################################################
+
+### 1. ユーザー登録
+# @name register
+POST {{baseUrl}}/api/v1/users
+Content-Type: {{contentType}}
+
+{
+  "email": "test@example.com",
+  "password": "password123"
+}
+
+### 2. ログイン
+# @name login
+POST {{baseUrl}}/api/v1/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "test@example.com",
+  "password": "password123"
+}
+
+### トークンを変数にセット（上のログインレスポンスから自動取得）
+@token = {{login.response.body.token}}
+
+
+###########################################################
+# Todos (認証必須)
+###########################################################
+
+### TODO一覧取得
+# @name listTodos
+GET {{baseUrl}}/api/v1/todos
+Authorization: Bearer {{token}}
+
+### TODO作成
+# @name createTodo
+POST {{baseUrl}}/api/v1/todos
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "title": "Learn Go"
+}
+
+### 作成したTODOのIDを取得
+@todoId = {{createTodo.response.body.id}}
+
+### TODO詳細取得
+GET {{baseUrl}}/api/v1/todos/{{todoId}}
+Authorization: Bearer {{token}}
+
+### TODO更新
+PUT {{baseUrl}}/api/v1/todos/{{todoId}}
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "title": "Learn Go and Echo",
+  "completed": true
+}
+
+### TODO削除
+DELETE {{baseUrl}}/api/v1/todos/{{todoId}}
+Authorization: Bearer {{token}}
+
+
+###########################################################
+# Error Cases
+###########################################################
+
+### 認証なしでアクセス → 401 Unauthorized
+GET {{baseUrl}}/api/v1/todos
+
+### 不正なログイン情報 → 401 Unauthorized
+POST {{baseUrl}}/api/v1/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "wrong@example.com",
+  "password": "wrongpassword"
+}
+
+### 存在しないTODO → 404 Not Found
+GET {{baseUrl}}/api/v1/todos/99999
+Authorization: Bearer {{token}}
+
+### バリデーションエラー → 400 Bad Request
+POST {{baseUrl}}/api/v1/todos
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "title": ""
+}
+
+### 重複ユーザー登録 → 400 Bad Request
+POST {{baseUrl}}/api/v1/users
+Content-Type: {{contentType}}
+
+{
+  "email": "test@example.com",
+  "password": "password123"
+}
+
+
+###########################################################
+# Bulk Operations (テスト用)
+###########################################################
+
+### 複数TODO作成
+POST {{baseUrl}}/api/v1/todos
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "title": "Task 1"
+}
+
+###
+POST {{baseUrl}}/api/v1/todos
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "title": "Task 2"
+}
+
+###
+POST {{baseUrl}}/api/v1/todos
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "title": "Task 3"
+}
