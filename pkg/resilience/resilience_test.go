@@ -3,6 +3,7 @@ package resilience_test
 import (
 	"context"
 	"errors"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -88,13 +89,16 @@ func TestCircuitBreaker_WithFallback(t *testing.T) {
 }
 
 func TestCircuitBreaker_StateTransition(t *testing.T) {
+	var mu sync.Mutex
 	var transitions []string
 
 	cb := resilience.NewCircuitBreaker("test",
 		resilience.WithMaxFailures(2),
 		resilience.WithTimeout(50*time.Millisecond),
 		resilience.WithStateChangeCallback(func(from, to resilience.State) {
+			mu.Lock()
 			transitions = append(transitions, from.String()+"->"+to.String())
+			mu.Unlock()
 		}),
 	)
 
@@ -119,6 +123,8 @@ func TestCircuitBreaker_StateTransition(t *testing.T) {
 	time.Sleep(50 * time.Millisecond)
 
 	// Check that transitions occurred
+	mu.Lock()
+	defer mu.Unlock()
 	assert.NotEmpty(t, transitions)
 }
 
