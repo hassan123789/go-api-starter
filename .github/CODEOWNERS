@@ -1,0 +1,31 @@
+# CODEOWNERS - defines code ownership for pull request reviews
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owners for everything in the repo
+*                           @hassan123789
+
+# Go source code
+*.go                        @hassan123789
+go.mod                      @hassan123789
+go.sum                      @hassan123789
+
+# API definitions
+/api/                       @hassan123789
+
+# Configuration files
+/.github/                   @hassan123789
+/deploy/                    @hassan123789
+docker-compose.yml          @hassan123789
+Dockerfile                  @hassan123789
+.golangci.yml               @hassan123789
+
+# Database migrations
+/db/                        @hassan123789
+
+# Documentation
+*.md                        @hassan123789
+/docs/                      @hassan123789
+
+# Security-sensitive files
+SECURITY.md                 @hassan123789
+.env.example                @hassan123789

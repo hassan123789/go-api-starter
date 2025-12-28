@@ -152,8 +152,13 @@ sec:
 	@echo "Running security checks..."
 	gosec -quiet ./...
 
+# Run vulnerability check
+vuln:
+	@echo "Running vulnerability check..."
+	govulncheck ./...
+
 # Run all code quality checks
-check: fmt vet lint sec test
+check: fmt vet lint sec vuln test
 	@echo "All checks passed!"
 
 # === Docker Targets ===
@@ -220,6 +225,7 @@ install-tools:
 	$(GO) install github.com/securego/gosec/v2/cmd/gosec@latest
 	$(GO) install golang.org/x/tools/cmd/goimports@latest
 	$(GO) install github.com/vektra/mockery/v2@latest
+	$(GO) install golang.org/x/vuln/cmd/govulncheck@latest
 	@echo "Tools installed successfully"
 
 # Run go mod tidy

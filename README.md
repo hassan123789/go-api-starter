@@ -1,10 +1,11 @@
 # Go API Starter 🚀
 
-[![Go Version](https://img.shields.io/badge/Go-1.22+-00ADD8?style=flat&logo=go)](https://go.dev/)
+[![Go Version](https://img.shields.io/badge/Go-1.25+-00ADD8?style=flat&logo=go)](https://go.dev/)
 [![CI](https://github.com/hassan123789/go-api-starter/actions/workflows/ci.yml/badge.svg)](https://github.com/hassan123789/go-api-starter/actions/workflows/ci.yml)
 [![Security](https://github.com/hassan123789/go-api-starter/actions/workflows/security.yml/badge.svg)](https://github.com/hassan123789/go-api-starter/actions/workflows/security.yml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/hassan123789/go-api-starter)](https://goreportcard.com/report/github.com/hassan123789/go-api-starter)
 [![codecov](https://codecov.io/gh/hassan123789/go-api-starter/branch/main/graph/badge.svg)](https://codecov.io/gh/hassan123789/go-api-starter)
+[![Go Vulnerability Check](https://img.shields.io/badge/govulncheck-passing-brightgreen)](https://pkg.go.dev/golang.org/x/vuln/cmd/govulncheck)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 **Production-ready Go REST API starter template** featuring JWT authentication, clean architecture, and modern Go patterns.
