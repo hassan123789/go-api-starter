@@ -152,13 +152,16 @@ func (c *Checker) Handler(version string) http.HandlerFunc {
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		if overallStatus == StatusDown {
+		switch overallStatus {
+		case StatusDown:
 			w.WriteHeader(http.StatusServiceUnavailable)
-		} else if overallStatus == StatusDegraded {
+		case StatusDegraded:
 			w.WriteHeader(http.StatusOK) // Still return 200 for degraded
+		default:
+			w.WriteHeader(http.StatusOK)
 		}
 
-		json.NewEncoder(w).Encode(response)
+		_ = json.NewEncoder(w).Encode(response)
 	}
 }
 
@@ -167,7 +170,7 @@ func LivenessHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(map[string]string{"status": "alive"})
+		_ = json.NewEncoder(w).Encode(map[string]string{"status": "alive"})
 	}
 }
 
@@ -180,14 +183,14 @@ func (c *Checker) ReadinessHandler() http.HandlerFunc {
 			if result.Status == StatusDown {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusServiceUnavailable)
-				json.NewEncoder(w).Encode(map[string]string{"status": "not ready"})
+				_ = json.NewEncoder(w).Encode(map[string]string{"status": "not ready"})
 				return
 			}
 		}
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(map[string]string{"status": "ready"})
+		_ = json.NewEncoder(w).Encode(map[string]string{"status": "ready"})
 	}
 }
 

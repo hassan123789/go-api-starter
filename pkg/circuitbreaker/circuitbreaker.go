@@ -184,6 +184,8 @@ func (cb *CircuitBreaker) recordResult(err error) {
 			cb.lastFailure = time.Now()
 			cb.transitionTo(StateOpen)
 		}
+	case StateOpen:
+		// No action needed - requests are blocked before reaching this point
 	}
 }
 

@@ -171,6 +171,8 @@ func (cb *CircuitBreaker) recordSuccess() {
 		if count >= cb.halfOpenMax {
 			cb.transitionLocked(StateClosed)
 		}
+	case StateOpen:
+		// No action needed in open state
 	}
 }
 
@@ -189,6 +191,8 @@ func (cb *CircuitBreaker) recordFailure() {
 		}
 	case StateHalfOpen:
 		cb.transitionLocked(StateOpen)
+	case StateOpen:
+		// Already open, no action needed
 	}
 }
 
