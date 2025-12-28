@@ -1,0 +1,21 @@
+{
+  "todos": [
+    {
+      "id": "<<ID>>",
+      "user_id": "<<ID>>",
+      "title": "Learn Go",
+      "completed": false,
+      "created_at": "<<TIMESTAMP>>",
+      "updated_at": "<<TIMESTAMP>>"
+    },
+    {
+      "id": "<<ID>>",
+      "user_id": "<<ID>>",
+      "title": "Build API",
+      "completed": true,
+      "created_at": "<<TIMESTAMP>>",
+      "updated_at": "<<TIMESTAMP>>"
+    }
+  ],
+  "total": 2
+}

@@ -15,12 +15,15 @@ A comprehensive TODO management API built with Go best practices, designed to de
 - 🏗️ **Clean Architecture** - Handler → Service → Repository layering
 - 🛡️ **Type-Safe Error Handling** - Custom errors with `errors.Is/As` support
 - ⚡ **Generics** - Go 1.18+ generic utilities (Result, Option, functional helpers)
-- 🔄 **Circuit Breaker** - Resilient external service calls
+- 🔄 **Circuit Breaker & Resilience** - Retry, rate limiting, graceful degradation
 - 🧵 **Worker Pool** - Concurrent task processing with generics
 - 📊 **Structured Logging** - Production-ready logging with `log/slog`
 - 🩺 **Health Checks** - Kubernetes-ready liveness/readiness probes
 - 🚦 **Rate Limiting** - Token bucket algorithm implementation
 - 📝 **Context Utilities** - Type-safe context value handling
+- 🎯 **RBAC** - Role-based access control (Admin, User, Viewer)
+- 🔍 **OpenTelemetry** - Distributed tracing with Jaeger
+- 📋 **Audit Logging** - Security event tracking
 
 ## 🏗️ Architecture
 
