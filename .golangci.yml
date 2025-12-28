@@ -28,7 +28,6 @@ linters:
     - goconst
     - gocritic
     - gocyclo
-    - goimports
     - goprintffuncname
     - gosec
     - misspell
@@ -89,10 +88,6 @@ linters:
         - ifElseChain
         - emptyStringTest
 
-    goimports:
-      local-prefixes:
-        - github.com/zareh/go-api-starter
-
     misspell:
       locale: US
 
@@ -128,9 +123,12 @@ issues:
 
 severity:
   default: warning
-  rules:
-    - linters:
-        - govet
-        - errcheck
-        - staticcheck
-      severity: error
+
+# goimports moved from linters to formatters in golangci-lint v2
+formatters:
+  enable:
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/zareh/go-api-starter
