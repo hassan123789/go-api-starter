@@ -2,6 +2,7 @@
 package middleware
 
 import (
+	"errors"
 	"log/slog"
 	"net/http"
 	"runtime/debug"
@@ -119,7 +120,7 @@ func Recover(logger *slog.Logger) echo.MiddlewareFunc {
 
 					// Return internal server error
 					err := apperrors.ErrInternal.WithDetails("an unexpected error occurred")
-					c.JSON(err.HTTPStatus, map[string]interface{}{
+					_ = c.JSON(err.HTTPStatus, map[string]interface{}{
 						"error": map[string]interface{}{
 							"code":    err.Code,
 							"message": err.Message,
@@ -285,7 +286,8 @@ func ErrorHandler(logger *slog.Logger) echo.HTTPErrorHandler {
 		var details string
 
 		// Check if it's an Echo HTTP error
-		if he, ok := err.(*echo.HTTPError); ok {
+		var he *echo.HTTPError
+		if errors.As(err, &he) {
 			code = he.Code
 			if m, ok := he.Message.(string); ok {
 				message = m

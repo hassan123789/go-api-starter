@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"net/http"
 	"os"
@@ -128,7 +129,7 @@ func main() {
 	go func() {
 		addr := ":" + cfg.Port
 		slog.Info("Starting server", "address", addr)
-		if err := e.Start(addr); err != nil && err != http.ErrServerClosed {
+		if err := e.Start(addr); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			slog.Error("Failed to start server", "error", err)
 			os.Exit(1)
 		}

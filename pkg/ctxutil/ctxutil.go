@@ -19,7 +19,7 @@ func WithTimeout(parent context.Context, timeout time.Duration) (context.Context
 	return context.WithTimeout(parent, timeout)
 }
 
-// WithDeadline returns a context that will be cancelled at the specified deadline.
+// WithDeadline returns a context that will be canceled at the specified deadline.
 func WithDeadline(parent context.Context, deadline time.Time) (context.Context, context.CancelFunc) {
 	return context.WithDeadline(parent, deadline)
 }
@@ -57,7 +57,7 @@ func MustValue[T any](ctx context.Context, key ContextKey) T {
 	return val
 }
 
-// IsDone returns true if the context is done (cancelled or timed out).
+// IsDone returns true if the context is done (canceled or timed out).
 func IsDone(ctx context.Context) bool {
 	select {
 	case <-ctx.Done():
@@ -67,8 +67,8 @@ func IsDone(ctx context.Context) bool {
 	}
 }
 
-// Sleep sleeps for the specified duration or until the context is cancelled.
-// Returns true if the sleep completed, false if cancelled.
+// Sleep sleeps for the specified duration or until the context is canceled.
+// Returns true if the sleep completed, false if canceled.
 func Sleep(ctx context.Context, duration time.Duration) bool {
 	timer := time.NewTimer(duration)
 	defer timer.Stop()
@@ -99,7 +99,7 @@ func After(ctx context.Context, duration time.Duration) <-chan time.Time {
 	return ch
 }
 
-// Merge creates a new context that is cancelled when either parent context is cancelled.
+// Merge creates a new context that is canceled when either parent context is canceled.
 func Merge(ctx1, ctx2 context.Context) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx1)
 	go func() {

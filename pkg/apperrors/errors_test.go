@@ -41,7 +41,7 @@ func TestAppError_Unwrap(t *testing.T) {
 	wrappedErr := apperrors.ErrDatabase.Wrap(originalErr)
 
 	unwrapped := errors.Unwrap(wrappedErr)
-	if unwrapped != originalErr {
+	if !errors.Is(unwrapped, originalErr) {
 		t.Errorf("expected %v, got %v", originalErr, unwrapped)
 	}
 }

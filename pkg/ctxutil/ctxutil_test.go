@@ -82,7 +82,7 @@ func TestIsDone(t *testing.T) {
 		}
 	})
 
-	t.Run("cancelled", func(t *testing.T) {
+	t.Run("canceled", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel()
 		if !IsDone(ctx) {
@@ -106,7 +106,7 @@ func TestSleep(t *testing.T) {
 		}
 	})
 
-	t.Run("sleep cancelled", func(t *testing.T) {
+	t.Run("sleep canceled", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		go func() {
 			time.Sleep(25 * time.Millisecond)
@@ -118,7 +118,7 @@ func TestSleep(t *testing.T) {
 		duration := time.Since(start)
 
 		if completed {
-			t.Error("expected sleep to be cancelled")
+			t.Error("expected sleep to be canceled")
 		}
 		if duration > 100*time.Millisecond {
 			t.Errorf("expected quick cancellation, got %v", duration)
@@ -140,7 +140,7 @@ func TestMerge(t *testing.T) {
 		case <-merged.Done():
 			// Expected
 		case <-time.After(100 * time.Millisecond):
-			t.Error("merged context should be cancelled")
+			t.Error("merged context should be canceled")
 		}
 	})
 
@@ -157,7 +157,7 @@ func TestMerge(t *testing.T) {
 		case <-merged.Done():
 			// Expected
 		case <-time.After(100 * time.Millisecond):
-			t.Error("merged context should be cancelled")
+			t.Error("merged context should be canceled")
 		}
 	})
 }

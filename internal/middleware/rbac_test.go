@@ -69,7 +69,8 @@ func TestRequirePermission_Denied(t *testing.T) {
 
 	err := handler(c)
 	assert.Error(t, err)
-	he, ok := err.(*echo.HTTPError)
+	var he *echo.HTTPError
+	ok := errors.As(err, &he)
 	assert.True(t, ok)
 	assert.Equal(t, http.StatusForbidden, he.Code)
 }
@@ -88,7 +89,8 @@ func TestRequirePermission_Unauthorized(t *testing.T) {
 
 	err := handler(c)
 	assert.Error(t, err)
-	he, ok := err.(*echo.HTTPError)
+	var he *echo.HTTPError
+	ok := errors.As(err, &he)
 	assert.True(t, ok)
 	assert.Equal(t, http.StatusUnauthorized, he.Code)
 }

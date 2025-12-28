@@ -3,6 +3,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -127,7 +128,7 @@ func (s *Server) Start() error {
 	addr := fmt.Sprintf(":%d", s.port)
 	go func() {
 		s.logger.Info("Starting server", "address", addr)
-		if err := s.echo.Start(addr); err != nil && err != http.ErrServerClosed {
+		if err := s.echo.Start(addr); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			s.logger.Error("Server error", "error", err)
 		}
 	}()
@@ -145,7 +146,7 @@ func (s *Server) StartTLS(certFile, keyFile string) error {
 	addr := fmt.Sprintf(":%d", s.port)
 	go func() {
 		s.logger.Info("Starting TLS server", "address", addr)
-		if err := s.echo.StartTLS(addr, certFile, keyFile); err != nil && err != http.ErrServerClosed {
+		if err := s.echo.StartTLS(addr, certFile, keyFile); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			s.logger.Error("TLS server error", "error", err)
 		}
 	}()

@@ -56,7 +56,7 @@ func (rl *RateLimiter) AllowN(n int) bool {
 	return true
 }
 
-// Wait blocks until a token is available or context is cancelled.
+// Wait blocks until a token is available or context is canceled.
 func (rl *RateLimiter) Wait(ctx context.Context) error {
 	return rl.WaitN(ctx, 1)
 }

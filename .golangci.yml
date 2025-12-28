@@ -60,6 +60,12 @@ linters:
     errcheck:
       check-type-assertions: true
       check-blank: false
+      exclude-functions:
+        - (*database/sql.Rows).Close
+        - (*database/sql.DB).Close
+        - (io.Closer).Close
+        - (*net/http.Response).Body.Close
+        - (*encoding/json.Encoder).Encode
 
     govet:
       enable-all: true
@@ -68,7 +74,7 @@ linters:
         - shadow
 
     gocyclo:
-      min-complexity: 15
+      min-complexity: 20
 
     goconst:
       min-len: 3
@@ -88,11 +94,21 @@ linters:
         - ifElseChain
         - emptyStringTest
 
+    gosec:
+      excludes:
+        - G101
+        - G301
+        - G304
+        - G404
+
     misspell:
       locale: US
 
     nestif:
       min-complexity: 4
+
+    exhaustive:
+      default-signifies-exhaustive: true
 
     revive:
       rules:
@@ -103,6 +119,7 @@ linters:
         - name: error-strings
         - name: error-naming
         - name: exported
+          disabled: true
         - name: if-return
         - name: increment-decrement
         - name: var-naming

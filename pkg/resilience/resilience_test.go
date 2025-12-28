@@ -315,7 +315,7 @@ func TestIsRetryable(t *testing.T) {
 			expected: true,
 		},
 		{
-			name:     "context cancelled is not retryable",
+			name:     "context canceled is not retryable",
 			err:      context.Canceled,
 			expected: false,
 		},

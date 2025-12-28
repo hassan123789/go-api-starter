@@ -107,7 +107,7 @@ func BenchmarkRegistry_Get(b *testing.B) {
 }
 
 func BenchmarkRegistry_Get_New(b *testing.B) {
-	registry := NewRegistry(DefaultOptions())
+	var registry *Registry
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -117,6 +117,7 @@ func BenchmarkRegistry_Get_New(b *testing.B) {
 		b.StartTimer()
 		_ = registry.Get("new-service")
 	}
+	_ = registry // Avoid unused variable warning
 }
 
 func BenchmarkParallel_Execute(b *testing.B) {

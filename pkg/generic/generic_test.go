@@ -30,7 +30,7 @@ func TestResult(t *testing.T) {
 		if !result.IsErr() {
 			t.Error("expected IsErr to be true")
 		}
-		if result.UnwrapErr() != err {
+		if !errors.Is(result.UnwrapErr(), err) {
 			t.Error("expected error to match")
 		}
 	})
