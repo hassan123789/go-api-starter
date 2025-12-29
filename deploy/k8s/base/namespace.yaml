@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: go-api-starter
+  labels:
+    app.kubernetes.io/name: go-api-starter
+    app.kubernetes.io/managed-by: kustomize

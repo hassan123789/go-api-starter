@@ -1,0 +1,26 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: go-api-starter
+
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: go-api-starter
+      app.kubernetes.io/managed-by: kustomize
+
+resources:
+  - namespace.yaml
+  - serviceaccount.yaml
+  - configmap.yaml
+  - secret.yaml
+  - deployment.yaml
+  - service.yaml
+  - hpa.yaml
+  - pdb.yaml
+  - ingress.yaml
+  - networkpolicy.yaml
+
+images:
+  - name: go-api-starter
+    newName: ghcr.io/hassan123789/go-api-starter
+    newTag: latest

@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: go-api-starter-config
+  labels:
+    app.kubernetes.io/name: go-api-starter
+    app.kubernetes.io/component: config
+data:
+  PORT: "8080"
+  LOG_LEVEL: "info"
+  LOG_FORMAT: "json"
+  METRICS_ENABLED: "true"
+  HEALTH_CHECK_PATH: "/health"
+  READINESS_CHECK_PATH: "/ready"
+  LIVENESS_CHECK_PATH: "/live"

@@ -1,0 +1,28 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: go-api-starter-prod
+
+namePrefix: prod-
+
+labels:
+  - pairs:
+      environment: production
+
+resources:
+  - ../../base
+
+patches:
+  - path: deployment-patch.yaml
+  - path: hpa-patch.yaml
+  - path: ingress-patch.yaml
+
+images:
+  - name: go-api-starter
+    newName: ghcr.io/hassan123789/go-api-starter
+    # Use specific version tag in production, not 'latest'
+    newTag: v1.0.0
+
+replicas:
+  - name: go-api-starter
+    count: 3
