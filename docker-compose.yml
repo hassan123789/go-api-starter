@@ -3,8 +3,11 @@ services:
     build: .
     ports:
       - "8080:8080"
+      - "9090:9090"
     environment:
       - PORT=8080
+      - GRPC_PORT=9090
+      - GRPC_ENABLED=true
       - DATABASE_URL=postgres://postgres:postgres@db:5432/go_api_starter?sslmode=disable
       - JWT_SECRET=your-super-secret-key-change-in-production
     depends_on:

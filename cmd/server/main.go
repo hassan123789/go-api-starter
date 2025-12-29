@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 
 	"github.com/zareh/go-api-starter/internal/config"
+	internalgrpc "github.com/zareh/go-api-starter/internal/grpc"
 	"github.com/zareh/go-api-starter/internal/handler"
 	custommw "github.com/zareh/go-api-starter/internal/middleware"
 	"github.com/zareh/go-api-starter/internal/repository"
@@ -128,25 +130,52 @@ func main() {
 	// Start server
 	go func() {
 		addr := ":" + cfg.Port
-		slog.Info("Starting server", "address", addr)
+		slog.Info("Starting HTTP server", "address", addr)
 		if err := e.Start(addr); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			slog.Error("Failed to start server", "error", err)
+			slog.Error("Failed to start HTTP server", "error", err)
 			os.Exit(1)
 		}
 	}()
+
+	// Start gRPC server if enabled
+	var grpcServer *internalgrpc.Server
+	if cfg.GRPCEnabled {
+		grpcPort, _ := strconv.Atoi(cfg.GRPCPort)
+		grpcServer = internalgrpc.NewServer(internalgrpc.ServerConfig{
+			Port:       grpcPort,
+			JWTSecret:  cfg.JWTSecret,
+			Logger:     logger,
+			Reflection: true, // Enable reflection for development
+		}, todoService)
+
+		go func() {
+			if err := grpcServer.Start(); err != nil {
+				slog.Error("Failed to start gRPC server", "error", err)
+				os.Exit(1)
+			}
+		}()
+	}
 
 	// Graceful shutdown
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
-	slog.Info("Shutting down server...")
+	slog.Info("Shutting down servers...")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
+	// Shutdown gRPC server
+	if grpcServer != nil {
+		if err := grpcServer.Shutdown(ctx); err != nil {
+			slog.Error("Failed to shutdown gRPC server", "error", err)
+		}
+	}
+
+	// Shutdown HTTP server
 	if err := e.Shutdown(ctx); err != nil {
-		slog.Error("Failed to shutdown server", "error", err)
+		slog.Error("Failed to shutdown HTTP server", "error", err)
 		os.Exit(1)
 	}
 

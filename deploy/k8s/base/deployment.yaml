@@ -36,6 +36,9 @@ spec:
             - name: http
               containerPort: 8080
               protocol: TCP
+            - name: grpc
+              containerPort: 9090
+              protocol: TCP
           envFrom:
             - configMapRef:
                 name: go-api-starter-config

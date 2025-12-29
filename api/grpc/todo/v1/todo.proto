@@ -1,0 +1,100 @@
+syntax = "proto3";
+
+package todo.v1;
+
+option go_package = "github.com/zareh/go-api-starter/api/grpc/todo/v1;todov1";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/wrappers.proto";
+
+// TodoService provides CRUD operations for todos.
+service TodoService {
+  // CreateTodo creates a new todo item.
+  rpc CreateTodo(CreateTodoRequest) returns (Todo);
+
+  // GetTodo retrieves a single todo by ID.
+  rpc GetTodo(GetTodoRequest) returns (Todo);
+
+  // ListTodos retrieves all todos for the authenticated user.
+  rpc ListTodos(ListTodosRequest) returns (ListTodosResponse);
+
+  // UpdateTodo updates an existing todo.
+  rpc UpdateTodo(UpdateTodoRequest) returns (Todo);
+
+  // DeleteTodo removes a todo by ID.
+  rpc DeleteTodo(DeleteTodoRequest) returns (google.protobuf.Empty);
+
+  // StreamTodos streams todos as they are created or updated (Server Streaming).
+  rpc StreamTodos(StreamTodosRequest) returns (stream TodoEvent);
+}
+
+// Todo represents a todo item.
+message Todo {
+  int64 id = 1;
+  int64 user_id = 2;
+  string title = 3;
+  bool completed = 4;
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp updated_at = 6;
+}
+
+// CreateTodoRequest is the request for creating a todo.
+message CreateTodoRequest {
+  string title = 1;
+}
+
+// GetTodoRequest is the request for getting a single todo.
+message GetTodoRequest {
+  int64 id = 1;
+}
+
+// ListTodosRequest is the request for listing todos.
+message ListTodosRequest {
+  // Optional pagination
+  int32 page_size = 1;
+  string page_token = 2;
+
+  // Optional filters
+  google.protobuf.BoolValue completed = 3;
+}
+
+// ListTodosResponse is the response containing a list of todos.
+message ListTodosResponse {
+  repeated Todo todos = 1;
+  int32 total = 2;
+  string next_page_token = 3;
+}
+
+// UpdateTodoRequest is the request for updating a todo.
+message UpdateTodoRequest {
+  int64 id = 1;
+  google.protobuf.StringValue title = 2;
+  google.protobuf.BoolValue completed = 3;
+}
+
+// DeleteTodoRequest is the request for deleting a todo.
+message DeleteTodoRequest {
+  int64 id = 1;
+}
+
+// StreamTodosRequest is the request for streaming todo events.
+message StreamTodosRequest {
+  // Optional: only stream events for specific action types
+  repeated EventType event_types = 1;
+}
+
+// TodoEvent represents an event in the todo stream.
+message TodoEvent {
+  EventType type = 1;
+  Todo todo = 2;
+  google.protobuf.Timestamp timestamp = 3;
+}
+
+// EventType defines the type of todo event.
+enum EventType {
+  EVENT_TYPE_UNSPECIFIED = 0;
+  EVENT_TYPE_CREATED = 1;
+  EVENT_TYPE_UPDATED = 2;
+  EVENT_TYPE_DELETED = 3;
+}

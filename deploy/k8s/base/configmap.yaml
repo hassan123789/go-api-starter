@@ -7,6 +7,8 @@ metadata:
     app.kubernetes.io/component: config
 data:
   PORT: "8080"
+  GRPC_PORT: "9090"
+  GRPC_ENABLED: "true"
   LOG_LEVEL: "info"
   LOG_FORMAT: "json"
   METRICS_ENABLED: "true"

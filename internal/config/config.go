@@ -9,9 +9,11 @@ import (
 // Config holds all configuration for the application
 type Config struct {
 	Port        string
+	GRPCPort    string
 	DatabaseURL string
 	JWTSecret   string
-	JWTExpiry   int // hours
+	JWTExpiry   int  // hours
+	GRPCEnabled bool // Enable gRPC server
 }
 
 // Load loads configuration from environment variables
@@ -38,10 +40,19 @@ func Load() (*Config, error) {
 		}
 	}
 
+	grpcPort := os.Getenv("GRPC_PORT")
+	if grpcPort == "" {
+		grpcPort = "9090"
+	}
+
+	grpcEnabled := os.Getenv("GRPC_ENABLED") == "true"
+
 	return &Config{
 		Port:        port,
+		GRPCPort:    grpcPort,
 		DatabaseURL: databaseURL,
 		JWTSecret:   jwtSecret,
 		JWTExpiry:   jwtExpiry,
+		GRPCEnabled: grpcEnabled,
 	}, nil
 }

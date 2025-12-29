@@ -137,6 +137,33 @@ tasks:
       - task: test
 
   # ============================================================
+  # gRPC / Protocol Buffers
+  # ============================================================
+  proto:gen:
+    desc: Protocol Buffers からコードを生成
+    cmds:
+      - buf generate
+    sources:
+      - api/grpc/**/*.proto
+    generates:
+      - gen/go/**/*.pb.go
+
+  proto:lint:
+    desc: Protocol Buffers をリント
+    cmds:
+      - buf lint
+
+  proto:breaking:
+    desc: Protocol Buffers の破壊的変更を検出
+    cmds:
+      - buf breaking --against '.git#branch=main'
+
+  proto:format:
+    desc: Protocol Buffers をフォーマット
+    cmds:
+      - buf format -w
+
+  # ============================================================
   # Docker
   # ============================================================
   docker:up:
