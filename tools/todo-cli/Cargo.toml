@@ -1,0 +1,50 @@
+[package]
+name = "todo-cli"
+version = "0.1.0"
+edition = "2024"
+authors = ["Your Name"]
+description = "A CLI tool for managing todos via the go-api-starter API"
+license = "MIT"
+
+[dependencies]
+# CLI framework
+clap = { version = "4", features = ["derive", "env"] }
+
+# Async runtime
+tokio = { version = "1", features = ["full"] }
+
+# HTTP client
+reqwest = { version = "0.12", features = ["json", "rustls-tls"], default-features = false }
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Error handling
+anyhow = "1"
+thiserror = "2"
+
+# Configuration
+directories = "6"
+toml = "0.8"
+
+# Terminal output
+colored = "3"
+indicatif = "0.17"
+
+# Date/time
+chrono = { version = "0.4", features = ["serde"] }
+
+# Keyring for secure token storage
+keyring = { version = "3", features = ["windows-native", "apple-native", "linux-native"] }
+
+[dev-dependencies]
+assert_cmd = "2"
+predicates = "3"
+tempfile = "3"
+
+[profile.release]
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
