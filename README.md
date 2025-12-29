@@ -1,247 +1,196 @@
 # Go API Starter 🚀
 
-[![Go Version](https://img.shields.io/badge/Go-1.25+-00ADD8?style=flat&logo=go)](https://go.dev/)
+[![Go Version](https://img.shields.io/badge/Go-1.22+-00ADD8?style=flat&logo=go)](https://go.dev/)
 [![CI](https://github.com/hassan123789/go-api-starter/actions/workflows/ci.yml/badge.svg)](https://github.com/hassan123789/go-api-starter/actions/workflows/ci.yml)
 [![Security](https://github.com/hassan123789/go-api-starter/actions/workflows/security.yml/badge.svg)](https://github.com/hassan123789/go-api-starter/actions/workflows/security.yml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/hassan123789/go-api-starter)](https://goreportcard.com/report/github.com/hassan123789/go-api-starter)
 [![codecov](https://codecov.io/gh/hassan123789/go-api-starter/branch/main/graph/badge.svg)](https://codecov.io/gh/hassan123789/go-api-starter)
-[![Go Vulnerability Check](https://img.shields.io/badge/govulncheck-passing-brightgreen)](https://pkg.go.dev/golang.org/x/vuln/cmd/govulncheck)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**Production-ready Go REST API starter template** featuring JWT authentication, clean architecture, and modern Go patterns.
+**Production-ready Go REST &amp; gRPC API starter template** with JWT authentication, Kubernetes deployment, Clean Architecture, and a Rust CLI client.
 
-A comprehensive TODO management API built with Go best practices, designed to demonstrate production-grade code patterns including:
+---
 
-- 🔐 **JWT Authentication** - Secure token-based auth with refresh tokens
-- 🏗️ **Clean Architecture** - Handler → Service → Repository layering
-- 🛡️ **Type-Safe Error Handling** - Custom errors with `errors.Is/As` support
-- ⚡ **Generics** - Go 1.18+ generic utilities (Result, Option, functional helpers)
-- 🔄 **Circuit Breaker & Resilience** - Retry, rate limiting, graceful degradation
-- 🧵 **Worker Pool** - Concurrent task processing with generics
-- 📊 **Structured Logging** - Production-ready logging with `log/slog`
-- 🩺 **Health Checks** - Kubernetes-ready liveness/readiness probes
-- 🚦 **Rate Limiting** - Token bucket algorithm implementation
-- 📝 **Context Utilities** - Type-safe context value handling
-- 🎯 **RBAC** - Role-based access control (Admin, User, Viewer)
-- 🔍 **OpenTelemetry** - Distributed tracing with Jaeger
-- 📋 **Audit Logging** - Security event tracking
+## ✨ Key Features
+
+| Category | Features |
+|----------|----------|
+| **Authentication** | JWT with refresh tokens, bcrypt password hashing, RBAC (Admin/User/Viewer) |
+| **Architecture** | Clean Architecture (Handler → Service → Repository), Dependency Injection |
+| **API** | REST (Echo v4) + gRPC with streaming, OpenAPI 3.1 specification |
+| **Resilience** | Circuit breaker, retry with exponential backoff, rate limiting, graceful shutdown |
+| **Observability** | OpenTelemetry tracing (Jaeger), Prometheus metrics, structured logging (slog), audit logs |
+| **Infrastructure** | Docker, Kubernetes manifests with Kustomize (dev/prod), GitHub Actions CI/CD |
+| **Developer Tools** | Rust CLI client, Dev Container, Taskfile, pre-commit hooks, sqlc |
+| **Go Patterns** | Generics (Result/Option types), Worker Pool, Context utilities, Type-safe errors |
+
+---
 
 ## 🏗️ Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                              HTTP Layer                                      │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐        │
-│  │  RequestID  │→ │   Logger    │→ │   Recover   │→ │ RateLimiter │        │
-│  └─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘        │
-│         ↓                                                                    │
-│  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │                        Echo Router                                   │    │
-│  │  /health          /api/v1/users      /api/v1/todos                  │    │
-│  └─────────────────────────────────────────────────────────────────────┘    │
+│                           Transport Layer                                    │
+│  ┌───────────────────────────────┐  ┌───────────────────────────────┐       │
+│  │         REST (Echo)           │  │       gRPC (grpc-go)          │       │
+│  │  Port 8080                    │  │  Port 9090                    │       │
+│  │  /api/v1/todos, /health       │  │  TodoService (streaming)      │       │
+│  └───────────────────────────────┘  └───────────────────────────────┘       │
 └─────────────────────────────────────────────────────────────────────────────┘
-         ↓                    ↓                    ↓
+                                    ↓
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                             Handler Layer                                    │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐                         │
-│  │HealthHandler│  │ AuthHandler │  │ TodoHandler │                         │
-│  └─────────────┘  └─────────────┘  └─────────────┘                         │
-│        │                 │                 │                                 │
-│        │         Request Validation        │                                 │
-│        │         Response Formatting       │                                 │
+│                            Middleware Chain                                  │
+│  RequestID → Logger → Recovery → RateLimiter → Auth → RBAC                  │
 └─────────────────────────────────────────────────────────────────────────────┘
-         ↓                    ↓                    ↓
+                                    ↓
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                             Service Layer                                    │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐                         │
-│  │ HealthService│  │ AuthService │  │ TodoService │                         │
-│  └─────────────┘  └─────────────┘  └─────────────┘                         │
-│        │                 │                 │                                 │
-│        │         Business Logic            │                                 │
-│        │         JWT Generation            │                                 │
-│        │         Password Hashing          │                                 │
+│                            Handler Layer                                     │
+│  Request validation, response formatting, error mapping to HTTP/gRPC codes  │
 └─────────────────────────────────────────────────────────────────────────────┘
-         ↓                    ↓                    ↓
+                                    ↓
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                            Service Layer                                     │
+│  Business logic, JWT generation, password hashing, authorization checks      │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    ↓
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                           Repository Layer                                   │
-│  ┌──────────────────────┐  ┌──────────────────────┐                        │
-│  │   UserRepository     │  │   TodoRepository     │                        │
-│  │   (interface)        │  │   (interface)        │                        │
-│  └──────────────────────┘  └──────────────────────┘                        │
-│              │                        │                                      │
-│              ↓                        ↓                                      │
-│  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │                        PostgreSQL                                    │    │
-│  │  ┌───────────┐    ┌───────────┐                                     │    │
-│  │  │   users   │───→│   todos   │                                     │    │
-│  │  └───────────┘    └───────────┘                                     │    │
-│  └─────────────────────────────────────────────────────────────────────┘    │
+│  Data access interfaces, PostgreSQL implementation (sqlc generated)         │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    ↓
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                             PostgreSQL                                       │
+│  users (id, email, password_hash, role) ←──→ todos (id, user_id, title...)  │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
+
+---
 
 ## 📁 Project Structure
 
 ```
 go-api-starter/
-├── cmd/
-│   └── server/              # Application entry point
-│       └── main.go          # Graceful shutdown, DI setup
-│
-├── internal/                # Private application code
-│   ├── config/              # Configuration management
-│   ├── handler/             # HTTP handlers (controllers)
-│   │   ├── auth_handler.go
-│   │   ├── todo_handler.go
-│   │   └── handler_test.go
-│   ├── middleware/          # Custom middleware
-│   │   └── middleware.go    # RequestID, Logger, RateLimiter
+├── cmd/server/              # Application entry point with graceful shutdown
+├── internal/
+│   ├── config/              # Configuration management (env, validation)
+│   ├── handler/             # HTTP handlers (REST controllers)
+│   ├── grpc/                # gRPC server and service implementations
+│   ├── middleware/          # Custom middleware (auth, logging, rate limit)
 │   ├── model/               # Domain models
-│   ├── repository/          # Data access layer
-│   │   ├── interfaces.go    # Repository interfaces
-│   │   ├── user_repository.go
-│   │   └── todo_repository.go
+│   ├── repository/          # Data access layer (interfaces + implementations)
 │   └── service/             # Business logic layer
-│
-├── pkg/                     # Public reusable packages
-│   ├── apperrors/           # Custom error types
-│   │   ├── errors.go        # AppError, ErrorCode, helpers
-│   │   ├── errors_test.go
-│   │   └── doc.go           # Package documentation
-│   ├── cache/               # Generic in-memory cache
-│   │   ├── cache.go         # TTL, LRU eviction
-│   │   ├── cache_test.go
-│   │   └── doc.go
+├── pkg/                     # Reusable packages (see below)
+│   ├── apperrors/           # Custom error types with Is/As support
+│   ├── cache/               # Generic in-memory cache with TTL/LRU
 │   ├── circuitbreaker/      # Circuit breaker pattern
-│   │   ├── circuitbreaker.go
-│   │   ├── circuitbreaker_test.go
-│   │   └── doc.go
-│   ├── ctxutil/             # Context utilities
-│   │   ├── ctxutil.go       # Type-safe context values
-│   │   ├── ctxutil_test.go
-│   │   └── doc.go
-│   ├── generic/             # Generic utilities
-│   │   ├── generic.go       # Result, Option, Filter, Map, etc.
-│   │   ├── generic_test.go
-│   │   ├── example_test.go  # Examples for pkg.go.dev
-│   │   ├── benchmark_test.go
-│   │   └── doc.go
-│   ├── healthcheck/         # Health check system
-│   │   ├── healthcheck.go
-│   │   └── healthcheck_test.go
+│   ├── generic/             # Result/Option types, functional helpers
+│   ├── healthcheck/         # K8s-ready health check system
 │   ├── metrics/             # Prometheus metrics
-│   │   ├── metrics.go       # HTTP & business metrics
-│   │   ├── metrics_test.go
-│   │   └── doc.go
-│   ├── retry/               # Retry with backoff
-│   │   ├── retry.go         # Exponential backoff, jitter
-│   │   ├── retry_test.go
-│   │   └── doc.go
-│   ├── server/              # Server with functional options
-│   │   └── server.go
-│   ├── workerpool/          # Worker pool for concurrency
-│   │   ├── workerpool.go
-│   │   ├── workerpool_test.go
-│   │   ├── example_test.go
-│   │   ├── benchmark_test.go
-│   │   └── doc.go
-│   ├── response/            # Standard API responses
-│   └── validator/           # Input validation
-│
-├── api/
-│   ├── openapi.yaml         # OpenAPI 3.1 specification
-│   └── README.md            # API documentation guide
-│
+│   ├── rbac/                # Role-based access control
+│   ├── resilience/          # Retry, timeout, fallback patterns
+│   ├── retry/               # Exponential backoff with jitter
+│   ├── token/               # JWT token generation/validation
+│   ├── tracing/             # OpenTelemetry integration
+│   └── workerpool/          # Concurrent task processing
+├── api/grpc/                # Protocol Buffers definitions
+├── gen/go/                  # Generated gRPC code (buf)
 ├── deploy/
-│   ├── prometheus.yml       # Prometheus configuration
-│   └── grafana/             # Grafana provisioning
-│
+│   └── k8s/                 # Kubernetes manifests
+│       ├── base/            # Base manifests (Deployment, Service, HPA, etc.)
+│       └── overlays/        # Environment-specific (development, production)
+├── tools/
+│   └── todo-cli/            # Rust CLI client for the API
 ├── db/
 │   ├── migrations/          # SQL migrations
-│   └── queries/             # sqlc queries
-│
-├── .github/
-│   └── workflows/
-│       ├── ci.yml           # CI pipeline
-│       ├── security.yml     # Security scanning
-│       └── release.yml      # Release automation
-│
-├── .golangci.yml            # Linter configuration (50+ linters)
-├── cliff.toml               # Changelog generation
-├── Dockerfile               # Multi-stage build
-├── docker-compose.yml       # Local development with Swagger UI
-├── Makefile                 # Development commands
-├── CONTRIBUTING.md          # Contribution guidelines
-├── SECURITY.md              # Security policy
-└── README.md
+│   └── queries/             # sqlc query definitions
+├── docs/
+│   ├── adr/                 # Architecture Decision Records
+│   └── openapi.yaml         # OpenAPI 3.1 specification
+└── .github/workflows/       # CI/CD pipelines
 ```
 
-## 🛠️ Tech Stack
-
-| Category | Technology | Purpose |
-|----------|------------|---------|
-| **Language** | Go 1.22+ | Core language |
-| **Framework** | Echo v4 | HTTP routing, middleware |
-| **Database** | PostgreSQL 16 | Data persistence |
-| **Auth** | golang-jwt/jwt/v5 | JWT token handling |
-| **Logging** | log/slog | Structured logging |
-| **Container** | Docker | Containerization |
-| **CI/CD** | GitHub Actions | Automated testing |
-| **Linting** | golangci-lint | Code quality (50+ linters) |
+---
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
 - Go 1.22+
-- Docker & Docker Compose
-- Make (optional)
+- Docker &amp; Docker Compose
+- (Optional) [Task](https://taskfile.dev/) for development commands
 
-### Installation
+### Option 1: Docker Compose (Recommended)
 
 ```bash
-# Clone the repository
+# Clone and start all services
+git clone https://github.com/hassan123789/go-api-starter.git
+cd go-api-starter
+docker-compose up -d
+
+# API available at http://localhost:8080
+# gRPC available at localhost:9090
+```
+
+### Option 2: Local Development
+
+```bash
+# Clone repository
 git clone https://github.com/hassan123789/go-api-starter.git
 cd go-api-starter
 
-# Copy environment file
+# Setup environment
 cp .env.example .env
 
-# Install development tools
-make setup
-
-# Start database
-make docker-up
+# Start PostgreSQL
+docker-compose up -d postgres
 
 # Run migrations
 export DATABASE_URL="postgres://postgres:postgres@localhost:5432/go_api_starter?sslmode=disable"
-make migrate
+task migrate  # or: make migrate
 
-# Start the server
-make run
+# Start server (with hot reload)
+task run      # or: make run
 ```
 
-### Using Docker Compose (Full Stack)
+### Option 3: Dev Container (VS Code)
 
-```bash
-docker-compose up -d
-```
+1. Open the project in VS Code
+2. Click "Reopen in Container" when prompted
+3. All tools and dependencies are pre-configured
 
-The API will be available at `http://localhost:8080`.
+---
 
-## 🔌 API Endpoints
+## 🔌 API Reference
+
+### REST Endpoints
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
-| `GET` | `/health` | Health check | ❌ |
-| `GET` | `/livez` | Liveness probe | ❌ |
-| `GET` | `/readyz` | Readiness probe | ❌ |
-| `POST` | `/api/v1/users` | Register user | ❌ |
-| `POST` | `/api/v1/auth/login` | Login | ❌ |
-| `GET` | `/api/v1/todos` | List todos | ✅ |
+| `GET` | `/health` | Full health check with dependencies | ❌ |
+| `GET` | `/livez` | Kubernetes liveness probe | ❌ |
+| `GET` | `/readyz` | Kubernetes readiness probe | ❌ |
+| `GET` | `/metrics` | Prometheus metrics | ❌ |
+| `POST` | `/api/v1/users` | Register new user | ❌ |
+| `POST` | `/api/v1/auth/login` | Login, returns JWT | ❌ |
+| `POST` | `/api/v1/auth/refresh` | Refresh access token | ✅ |
+| `GET` | `/api/v1/todos` | List todos (paginated) | ✅ |
 | `POST` | `/api/v1/todos` | Create todo | ✅ |
-| `GET` | `/api/v1/todos/:id` | Get todo | ✅ |
+| `GET` | `/api/v1/todos/:id` | Get todo by ID | ✅ |
 | `PUT` | `/api/v1/todos/:id` | Update todo | ✅ |
 | `DELETE` | `/api/v1/todos/:id` | Delete todo | ✅ |
+
+### gRPC Service
+
+```protobuf
+service TodoService {
+  rpc CreateTodo(CreateTodoRequest) returns (Todo);
+  rpc GetTodo(GetTodoRequest) returns (Todo);
+  rpc ListTodos(ListTodosRequest) returns (ListTodosResponse);
+  rpc UpdateTodo(UpdateTodoRequest) returns (Todo);
+  rpc DeleteTodo(DeleteTodoRequest) returns (google.protobuf.Empty);
+  rpc StreamTodos(StreamTodosRequest) returns (stream TodoEvent);  // Real-time updates
+}
+```
 
 ### Example Usage
 
@@ -251,7 +200,7 @@ curl -X POST http://localhost:8080/api/v1/users \
   -H "Content-Type: application/json" \
   -d '{"email": "user@example.com", "password": "securepass123"}'
 
-# Login and get token
+# Login
 TOKEN=$(curl -s -X POST http://localhost:8080/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email": "user@example.com", "password": "securepass123"}' | jq -r '.token')
@@ -260,16 +209,75 @@ TOKEN=$(curl -s -X POST http://localhost:8080/api/v1/auth/login \
 curl -X POST http://localhost:8080/api/v1/todos \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $TOKEN" \
-  -d '{"title": "Learn Go patterns"}'
+  -d '{"title": "Learn Go patterns", "description": "Study clean architecture"}'
 
 # List todos
 curl http://localhost:8080/api/v1/todos \
   -H "Authorization: Bearer $TOKEN"
 ```
 
-## 📦 Featured Packages
+---
 
-### `pkg/apperrors` - Custom Error Types
+## 🦀 Rust CLI Client
+
+A native CLI tool for interacting with the API:
+
+```bash
+# Build the CLI
+cd tools/todo-cli
+cargo build --release
+
+# Configure API endpoint
+./target/release/todo-cli config set-url http://localhost:8080
+
+# Authenticate
+./target/release/todo-cli auth login
+
+# Manage todos
+./target/release/todo-cli list
+./target/release/todo-cli create --title "New task" --description "Details"
+./target/release/todo-cli done 1
+./target/release/todo-cli delete 1
+
+# JSON output for scripting
+./target/release/todo-cli list --format json
+```
+
+---
+
+## ☸️ Kubernetes Deployment
+
+Production-ready Kubernetes manifests with Kustomize:
+
+```bash
+# Preview development deployment
+kubectl kustomize deploy/k8s/overlays/development
+
+# Preview production deployment
+kubectl kustomize deploy/k8s/overlays/production
+
+# Apply to cluster
+kubectl apply -k deploy/k8s/overlays/production
+```
+
+### Included Resources
+
+| Resource | Description |
+|----------|-------------|
+| Deployment | Rolling updates, resource limits, security context (non-root) |
+| Service | ClusterIP for internal communication |
+| HPA | Auto-scaling (3-20 replicas based on CPU/memory) |
+| PDB | Pod disruption budget (minAvailable: 2) |
+| Ingress | With cert-manager TLS annotations |
+| NetworkPolicy | Restrict traffic to namespace |
+| ConfigMap | Environment configuration |
+| Secret | Sensitive data (JWT secret, DB credentials) |
+
+---
+
+## 📦 Reusable Packages (`pkg/`)
+
+### Error Handling (`pkg/apperrors`)
 
 ```go
 import "github.com/hassan123789/go-api-starter/pkg/apperrors"
@@ -277,26 +285,28 @@ import "github.com/hassan123789/go-api-starter/pkg/apperrors"
 // Create typed errors
 err := apperrors.NewNotFound("todo", todoID)
 err := apperrors.NewValidation("email", "invalid format")
+err := apperrors.NewUnauthorized("invalid credentials")
 
-// Check error types
+// Check error types (works with errors.Is)
 if errors.Is(err, apperrors.ErrNotFound) {
     // Handle not found
 }
 
-// Get HTTP status
-status := apperrors.GetHTTPStatus(err) // 404
+// Automatic HTTP status mapping
+status := apperrors.GetHTTPStatus(err) // 404, 400, 401, etc.
 ```
 
-### `pkg/generic` - Generic Utilities
+### Generic Utilities (`pkg/generic`)
 
 ```go
 import "github.com/hassan123789/go-api-starter/pkg/generic"
 
-// Result type (Rust-like)
-result := generic.Ok(42)
+// Result type (Rust-like error handling)
+result := generic.Ok(fetchData())
 if result.IsOk() {
-    value := result.Unwrap()
+    data := result.Unwrap()
 }
+errorResult := generic.Err[int](errors.New("failed"))
 
 // Option type
 opt := generic.Some("value")
@@ -309,14 +319,15 @@ doubled := generic.MapSlice(numbers, func(n int) int { return n * 2 })
 sum := generic.Reduce(numbers, 0, func(acc, n int) int { return acc + n })
 ```
 
-### `pkg/circuitbreaker` - Circuit Breaker
+### Circuit Breaker (`pkg/circuitbreaker`)
 
 ```go
 import "github.com/hassan123789/go-api-starter/pkg/circuitbreaker"
 
 cb := circuitbreaker.New(circuitbreaker.Options{
-    MaxFailures: 5,
-    Timeout:     30 * time.Second,
+    MaxFailures:   5,
+    Timeout:       30 * time.Second,
+    HalfOpenLimit: 3,
 })
 
 err := cb.Execute(ctx, func(ctx context.Context) error {
@@ -324,10 +335,10 @@ err := cb.Execute(ctx, func(ctx context.Context) error {
 })
 
 // With fallback
-err = cb.ExecuteWithFallback(ctx, mainFn, fallbackFn)
+result, err := cb.ExecuteWithFallback(ctx, primaryFn, fallbackFn)
 ```
 
-### `pkg/workerpool` - Worker Pool
+### Worker Pool (`pkg/workerpool`)
 
 ```go
 import "github.com/hassan123789/go-api-starter/pkg/workerpool"
@@ -346,158 +357,117 @@ pipeline := workerpool.NewPipeline[Data]().
 result, err := pipeline.Execute(ctx, input)
 ```
 
-## 🧪 Testing
+---
+
+## 🛠️ Development
+
+### Available Commands
+
+```bash
+# Using Taskfile (recommended)
+task            # Show all available tasks
+task build      # Build binary
+task test       # Run tests
+task lint       # Run golangci-lint (50+ linters)
+task check      # Run all checks (lint, test, vet)
+task docker:up  # Start Docker services
+task proto      # Regenerate gRPC code
+
+# Using Makefile (alternative)
+make help       # Show all commands
+make build      # Build binary
+make test       # Run tests with coverage
+make lint       # Run linter
+```
+
+### Testing
 
 ```bash
 # Run all tests
-make test
+task test
 
 # Run with coverage report
-make test-coverage
+task test:coverage
+
+# Run specific package tests
+go test -v ./pkg/circuitbreaker/...
 
 # Run benchmarks
-make bench
-
-# Run short tests only
-make test-short
+task bench
 ```
 
-## 📝 Development Commands
+### Code Quality
 
 ```bash
-make help           # Show all available commands
+# Lint with 50+ rules
+task lint
 
-# Build & Run
-make build          # Build with version info
-make build-all      # Build for multiple platforms
-make run            # Run locally
-make clean          # Remove build artifacts
+# Format code
+task fmt
 
-# Code Quality
-make lint           # Run golangci-lint (50+ linters)
-make fmt            # Format code
-make vet            # Run go vet
-make sec            # Run security checks
-make check          # Run all checks
+# Security scan
+task sec
 
-# Docker
-make docker-up      # Start containers
-make docker-down    # Stop containers
-make docker-build   # Build image
-make docker-logs    # View logs
-
-# Database
-make migrate        # Run migrations
-make migrate-down   # Rollback migration
-make db-shell       # Open psql shell
+# Pre-commit hooks (auto-run on commit)
+pre-commit install
+pre-commit run --all-files
 ```
+
+---
 
 ## 🔧 Configuration
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `PORT` | Server port | `8080` |
-| `DATABASE_URL` | PostgreSQL connection URL | - |
+| `PORT` | HTTP server port | `8080` |
+| `GRPC_PORT` | gRPC server port | `9090` |
+| `GRPC_ENABLED` | Enable gRPC server | `true` |
+| `DATABASE_URL` | PostgreSQL connection string | - |
 | `JWT_SECRET` | JWT signing key | - |
-| `JWT_EXPIRY` | Token expiry (hours) | `24` |
+| `JWT_EXPIRY` | Access token expiry | `24h` |
+| `JWT_REFRESH_EXPIRY` | Refresh token expiry | `168h` |
+| `LOG_LEVEL` | Log level (debug/info/warn/error) | `info` |
+| `OTEL_EXPORTER_JAEGER_ENDPOINT` | Jaeger collector URL | - |
 
-## 📊 Database Schema
+---
 
-```
-┌──────────────────┐       ┌──────────────────┐
-│      users       │       │      todos       │
-├──────────────────┤       ├──────────────────┤
-│ id (PK)          │───┐   │ id (PK)          │
-│ email (UNIQUE)   │   │   │ user_id (FK)     │←─┘
-│ password_hash    │   │   │ title            │
-│ created_at       │   └──→│ completed        │
-│ updated_at       │       │ created_at       │
-└──────────────────┘       │ updated_at       │
-                           └──────────────────┘
-```
+## 📚 Documentation
+
+| Document | Description |
+|----------|-------------|
+| [API Specification](docs/openapi.yaml) | OpenAPI 3.1 specification |
+| [Architecture Decisions](docs/adr/) | ADRs explaining design choices |
+| [Architecture Guide](docs/ARCHITECTURE.md) | Deep dive into design decisions |
+| [Contributing Guide](CONTRIBUTING.md) | How to contribute |
+| [Security Policy](SECURITY.md) | Reporting vulnerabilities |
+| [Kubernetes Guide](deploy/k8s/README.md) | Deployment instructions |
+
+### Architecture Decision Records (ADR)
+
+| ADR | Title |
+|-----|-------|
+| [001](docs/adr/001-use-clean-architecture.md) | Adopting Clean Architecture |
+| [002](docs/adr/002-choose-echo-framework.md) | Choosing Echo Framework |
+| [003](docs/adr/003-jwt-authentication-strategy.md) | JWT Authentication Strategy |
+| [004](docs/adr/004-error-handling-approach.md) | Error Handling Design |
+| [005](docs/adr/0005-opentelemetry-tracing.md) | OpenTelemetry Tracing |
+| [006](docs/adr/0006-rbac-strategy.md) | RBAC Strategy |
+| [007](docs/adr/0007-resilience-patterns.md) | Resilience Patterns |
+| [008](docs/adr/0008-audit-logging.md) | Audit Logging |
+
+---
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Write tests for your changes
+4. Ensure all checks pass (`task check`)
+5. Commit with conventional commits (`git commit -m 'feat: add amazing feature'`)
+6. Push to your branch (`git push origin feature/amazing-feature`)
+7. Open a Pull Request
 
-## 🧰 開発ツール
-
-### Dev Container（推奨）
-
-VS Code で開発環境を一発構築：
-
-```bash
-# VS Code で開く → "Reopen in Container" を選択
-code .
-```
-
-自動でセットアップされるもの：
-- Go 1.22+
-- golangci-lint
-- sqlc
-- air (ホットリロード)
-- PostgreSQL クライアント
-- VS Code 拡張機能
-
-### Taskfile（モダンなMake代替）
-
-```bash
-# Taskfileをインストール
-go install github.com/go-task/task/v3/cmd/task@latest
-
-# タスク一覧を表示
-task
-
-# よく使うコマンド
-task build          # ビルド
-task test           # テスト
-task lint           # Lint
-task docker:up      # Docker起動
-task check          # 全チェック実行
-```
-
-### Pre-commit Hooks
-
-コミット前に自動でコード品質チェック：
-
-```bash
-# pre-commit をインストール（Python必須）
-pip install pre-commit
-
-# フックをセットアップ
-pre-commit install
-pre-commit install --hook-type commit-msg
-
-# 手動で全ファイルをチェック
-pre-commit run --all-files
-```
-
-### API テスト
-
-**VS Code REST Client:**
-```bash
-# docs/api.http を VS Code で開いて実行
-```
-
-**Postman:**
-```bash
-# docs/Go API Starter.postman_collection.json をインポート
-```
-
-## 📚 Architecture Decision Records (ADR)
-
-主要な設計判断とその理由を記録しています：
-
-| ADR | タイトル |
-|-----|---------|
-| [001](docs/adr/001-use-clean-architecture.md) | Clean Architectureの採用 |
-| [002](docs/adr/002-choose-echo-framework.md) | Echo Frameworkの選定 |
-| [003](docs/adr/003-jwt-authentication-strategy.md) | JWT認証戦略 |
-| [004](docs/adr/004-error-handling-approach.md) | エラーハンドリング設計 |
+---
 
 ## 📄 License
 
@@ -505,4 +475,4 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ---
 
-**⭐ If you find this project useful, please give it a star!**
+**⭐ If this project helps you, please consider giving it a star!**
