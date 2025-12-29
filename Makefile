@@ -46,6 +46,8 @@ help:
 	@echo "  vet            - Run go vet"
 	@echo "  sec            - Run security checks with gosec"
 	@echo "  check          - Run all code quality checks"
+	@echo "  pre-push       - Fast checks before pushing (fmt + lint + test-short)"
+	@echo "  ci             - Run CI checks (lint + test)"
 	@echo ""
 	@echo "Docker:"
 	@echo "  docker-up      - Start Docker containers"
@@ -160,6 +162,14 @@ vuln:
 # Run all code quality checks
 check: fmt vet lint sec vuln test
 	@echo "All checks passed!"
+
+# Pre-push checks (fast version - run before pushing)
+pre-push: fmt lint test-short
+	@echo "✅ Pre-push checks passed! Ready to push."
+
+# CI checks (matches GitHub Actions workflow)
+ci: lint test
+	@echo "✅ CI checks passed!"
 
 # === Docker Targets ===
 
