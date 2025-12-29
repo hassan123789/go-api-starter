@@ -38,7 +38,8 @@ func TestAuthService_Register_EmailExists(t *testing.T) {
 	ctx := context.Background()
 
 	// Create existing user
-	repo.Create(ctx, "existing@example.com", "hash")
+	_, err := repo.Create(ctx, "existing@example.com", "hash")
+	require.NoError(t, err)
 
 	// Try to register with same email
 	exists, err := repo.EmailExists(ctx, "existing@example.com")
@@ -52,8 +53,10 @@ func TestAuthService_Login_Success(t *testing.T) {
 
 	// Create user with hashed password
 	password := "securepassword123"
-	hash, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	repo.Create(ctx, "test@example.com", string(hash))
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	require.NoError(t, err)
+	_, err = repo.Create(ctx, "test@example.com", string(hash))
+	require.NoError(t, err)
 
 	// Simulate login
 	user, err := repo.GetByEmail(ctx, "test@example.com")
@@ -69,8 +72,10 @@ func TestAuthService_Login_WrongPassword(t *testing.T) {
 
 	// Create user with hashed password
 	password := "securepassword123"
-	hash, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	repo.Create(ctx, "test@example.com", string(hash))
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	require.NoError(t, err)
+	_, err = repo.Create(ctx, "test@example.com", string(hash))
+	require.NoError(t, err)
 
 	// Try to login with wrong password
 	user, err := repo.GetByEmail(ctx, "test@example.com")
@@ -108,10 +113,12 @@ func TestBcryptCost(t *testing.T) {
 	password := "testpassword"
 
 	// Default cost
-	hash1, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	hash1, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	require.NoError(t, err)
 
 	// Min cost (faster for tests)
-	hash2, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
+	hash2, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
+	require.NoError(t, err)
 
 	// Both should validate
 	assert.NoError(t, bcrypt.CompareHashAndPassword(hash1, []byte(password)))

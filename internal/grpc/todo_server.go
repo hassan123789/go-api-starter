@@ -109,6 +109,8 @@ func (s *TodoServer) ListTodos(ctx context.Context, req *todov1.ListTodosRequest
 		protoTodos[i] = modelToProto(&t)
 	}
 
+	// Safe conversion: len(protoTodos) is bounded by database query limits
+	// #nosec G115 - length is bounded by reasonable limits
 	return &todov1.ListTodosResponse{
 		Todos: protoTodos,
 		Total: int32(len(protoTodos)),
@@ -240,20 +242,6 @@ func modelToProto(todo *model.Todo) *todov1.Todo {
 		CreatedAt: timestamppb.New(todo.CreatedAt),
 		UpdatedAt: timestamppb.New(todo.UpdatedAt),
 	}
-}
-
-// protoToUpdateRequest converts proto update request to model.
-func protoToUpdateRequest(req *todov1.UpdateTodoRequest) model.UpdateTodoRequest {
-	result := model.UpdateTodoRequest{}
-	if req.Title != nil {
-		title := req.Title.Value
-		result.Title = &title
-	}
-	if req.Completed != nil {
-		completed := req.Completed.Value
-		result.Completed = &completed
-	}
-	return result
 }
 
 // Ensure interface compatibility at compile time.

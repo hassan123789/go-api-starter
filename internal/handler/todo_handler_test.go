@@ -22,25 +22,6 @@ func createTestToken(userID int64) *jwt.Token {
 	return jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 }
 
-// Helper function to set up Echo context with JWT token
-func setupContext(method, path string, body string, userID int64) (echo.Context, *httptest.ResponseRecorder) {
-	e := echo.New()
-	var req *http.Request
-	if body != "" {
-		req = httptest.NewRequest(method, path, strings.NewReader(body))
-		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	} else {
-		req = httptest.NewRequest(method, path, nil)
-	}
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-
-	// Set JWT token
-	c.Set("user", createTestToken(userID))
-
-	return c, rec
-}
-
 // Test getUserIDFromToken function
 func TestGetUserIDFromToken(t *testing.T) {
 	e := echo.New()
@@ -177,7 +158,10 @@ func TestTodoHandler_Create_ValidationPaths(t *testing.T) {
 	}
 }
 
-func TestTodoHandler_Get_ValidationPaths(t *testing.T) {
+// testIDValidation is a helper to test ID param and token validation for handlers
+// that accept an ID parameter (Get, Update, Delete).
+func testIDValidation(t *testing.T, method string, handlerFunc func(handler *TodoHandler) func(echo.Context) error, hasBody bool) {
+	t.Helper()
 	handler := NewTodoHandler(nil)
 
 	testCases := []struct {
@@ -203,7 +187,13 @@ func TestTodoHandler_Get_ValidationPaths(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			e := echo.New()
-			req := httptest.NewRequest(http.MethodGet, "/api/v1/todos/"+tc.idParam, nil)
+			var req *http.Request
+			if hasBody {
+				req = httptest.NewRequest(method, "/api/v1/todos/"+tc.idParam, strings.NewReader(`{"title":"Test"}`))
+				req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+			} else {
+				req = httptest.NewRequest(method, "/api/v1/todos/"+tc.idParam, nil)
+			}
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
 			c.SetParamNames("id")
@@ -213,11 +203,23 @@ func TestTodoHandler_Get_ValidationPaths(t *testing.T) {
 				c.Set("user", createTestToken(1))
 			}
 
-			err := handler.Get(c)
+			err := handlerFunc(handler)(c)
 			require.NoError(t, err)
 			assert.Equal(t, tc.wantStatus, rec.Code)
 		})
 	}
+}
+
+func TestTodoHandler_Get_ValidationPaths(t *testing.T) {
+	testIDValidation(t, http.MethodGet, func(h *TodoHandler) func(echo.Context) error {
+		return h.Get
+	}, false)
+}
+
+func TestTodoHandler_Delete_ValidationPaths(t *testing.T) {
+	testIDValidation(t, http.MethodDelete, func(h *TodoHandler) func(echo.Context) error {
+		return h.Delete
+	}, false)
 }
 
 func TestTodoHandler_Update_ValidationPaths(t *testing.T) {
@@ -275,49 +277,6 @@ func TestTodoHandler_Update_ValidationPaths(t *testing.T) {
 			}
 
 			err := handler.Update(c)
-			require.NoError(t, err)
-			assert.Equal(t, tc.wantStatus, rec.Code)
-		})
-	}
-}
-
-func TestTodoHandler_Delete_ValidationPaths(t *testing.T) {
-	handler := NewTodoHandler(nil)
-
-	testCases := []struct {
-		name       string
-		idParam    string
-		setupToken bool
-		wantStatus int
-	}{
-		{
-			name:       "Invalid ID returns 400",
-			idParam:    "abc",
-			setupToken: true,
-			wantStatus: http.StatusBadRequest,
-		},
-		{
-			name:       "No token returns 401",
-			idParam:    "1",
-			setupToken: false,
-			wantStatus: http.StatusUnauthorized,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			e := echo.New()
-			req := httptest.NewRequest(http.MethodDelete, "/api/v1/todos/"+tc.idParam, nil)
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
-			c.SetParamNames("id")
-			c.SetParamValues(tc.idParam)
-
-			if tc.setupToken {
-				c.Set("user", createTestToken(1))
-			}
-
-			err := handler.Delete(c)
 			require.NoError(t, err)
 			assert.Equal(t, tc.wantStatus, rec.Code)
 		})

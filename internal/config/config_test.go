@@ -8,22 +8,32 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func setEnv(t *testing.T, key, value string) {
+	t.Helper()
+	require.NoError(t, os.Setenv(key, value))
+}
+
+func unsetEnv(t *testing.T, key string) {
+	t.Helper()
+	require.NoError(t, os.Unsetenv(key))
+}
+
 func TestLoad_Success(t *testing.T) {
 	// Setup environment
-	os.Setenv("DATABASE_URL", "postgres://localhost/test")
-	os.Setenv("JWT_SECRET", "test-secret")
-	os.Setenv("PORT", "3000")
-	os.Setenv("JWT_EXPIRY", "48")
-	os.Setenv("GRPC_PORT", "9091")
-	os.Setenv("GRPC_ENABLED", "true")
-	defer func() {
-		os.Unsetenv("DATABASE_URL")
-		os.Unsetenv("JWT_SECRET")
-		os.Unsetenv("PORT")
-		os.Unsetenv("JWT_EXPIRY")
-		os.Unsetenv("GRPC_PORT")
-		os.Unsetenv("GRPC_ENABLED")
-	}()
+	setEnv(t, "DATABASE_URL", "postgres://localhost/test")
+	setEnv(t, "JWT_SECRET", "test-secret")
+	setEnv(t, "PORT", "3000")
+	setEnv(t, "JWT_EXPIRY", "48")
+	setEnv(t, "GRPC_PORT", "9091")
+	setEnv(t, "GRPC_ENABLED", "true")
+	t.Cleanup(func() {
+		unsetEnv(t, "DATABASE_URL")
+		unsetEnv(t, "JWT_SECRET")
+		unsetEnv(t, "PORT")
+		unsetEnv(t, "JWT_EXPIRY")
+		unsetEnv(t, "GRPC_PORT")
+		unsetEnv(t, "GRPC_ENABLED")
+	})
 
 	cfg, err := Load()
 	require.NoError(t, err)
@@ -37,16 +47,16 @@ func TestLoad_Success(t *testing.T) {
 
 func TestLoad_Defaults(t *testing.T) {
 	// Setup required environment only
-	os.Setenv("DATABASE_URL", "postgres://localhost/test")
-	os.Setenv("JWT_SECRET", "test-secret")
-	os.Unsetenv("PORT")
-	os.Unsetenv("JWT_EXPIRY")
-	os.Unsetenv("GRPC_PORT")
-	os.Unsetenv("GRPC_ENABLED")
-	defer func() {
-		os.Unsetenv("DATABASE_URL")
-		os.Unsetenv("JWT_SECRET")
-	}()
+	setEnv(t, "DATABASE_URL", "postgres://localhost/test")
+	setEnv(t, "JWT_SECRET", "test-secret")
+	unsetEnv(t, "PORT")
+	unsetEnv(t, "JWT_EXPIRY")
+	unsetEnv(t, "GRPC_PORT")
+	unsetEnv(t, "GRPC_ENABLED")
+	t.Cleanup(func() {
+		unsetEnv(t, "DATABASE_URL")
+		unsetEnv(t, "JWT_SECRET")
+	})
 
 	cfg, err := Load()
 	require.NoError(t, err)
@@ -57,9 +67,11 @@ func TestLoad_Defaults(t *testing.T) {
 }
 
 func TestLoad_MissingDatabaseURL(t *testing.T) {
-	os.Unsetenv("DATABASE_URL")
-	os.Setenv("JWT_SECRET", "test-secret")
-	defer os.Unsetenv("JWT_SECRET")
+	unsetEnv(t, "DATABASE_URL")
+	setEnv(t, "JWT_SECRET", "test-secret")
+	t.Cleanup(func() {
+		unsetEnv(t, "JWT_SECRET")
+	})
 
 	cfg, err := Load()
 	assert.Nil(t, cfg)
@@ -68,9 +80,11 @@ func TestLoad_MissingDatabaseURL(t *testing.T) {
 }
 
 func TestLoad_MissingJWTSecret(t *testing.T) {
-	os.Setenv("DATABASE_URL", "postgres://localhost/test")
-	os.Unsetenv("JWT_SECRET")
-	defer os.Unsetenv("DATABASE_URL")
+	setEnv(t, "DATABASE_URL", "postgres://localhost/test")
+	unsetEnv(t, "JWT_SECRET")
+	t.Cleanup(func() {
+		unsetEnv(t, "DATABASE_URL")
+	})
 
 	cfg, err := Load()
 	assert.Nil(t, cfg)
@@ -79,14 +93,14 @@ func TestLoad_MissingJWTSecret(t *testing.T) {
 }
 
 func TestLoad_InvalidJWTExpiry(t *testing.T) {
-	os.Setenv("DATABASE_URL", "postgres://localhost/test")
-	os.Setenv("JWT_SECRET", "test-secret")
-	os.Setenv("JWT_EXPIRY", "invalid")
-	defer func() {
-		os.Unsetenv("DATABASE_URL")
-		os.Unsetenv("JWT_SECRET")
-		os.Unsetenv("JWT_EXPIRY")
-	}()
+	setEnv(t, "DATABASE_URL", "postgres://localhost/test")
+	setEnv(t, "JWT_SECRET", "test-secret")
+	setEnv(t, "JWT_EXPIRY", "invalid")
+	t.Cleanup(func() {
+		unsetEnv(t, "DATABASE_URL")
+		unsetEnv(t, "JWT_SECRET")
+		unsetEnv(t, "JWT_EXPIRY")
+	})
 
 	cfg, err := Load()
 	require.NoError(t, err)
@@ -94,13 +108,13 @@ func TestLoad_InvalidJWTExpiry(t *testing.T) {
 }
 
 func TestLoad_GRPCEnabledVariations(t *testing.T) {
-	os.Setenv("DATABASE_URL", "postgres://localhost/test")
-	os.Setenv("JWT_SECRET", "test-secret")
-	defer func() {
-		os.Unsetenv("DATABASE_URL")
-		os.Unsetenv("JWT_SECRET")
-		os.Unsetenv("GRPC_ENABLED")
-	}()
+	setEnv(t, "DATABASE_URL", "postgres://localhost/test")
+	setEnv(t, "JWT_SECRET", "test-secret")
+	t.Cleanup(func() {
+		unsetEnv(t, "DATABASE_URL")
+		unsetEnv(t, "JWT_SECRET")
+		unsetEnv(t, "GRPC_ENABLED")
+	})
 
 	testCases := []struct {
 		name     string
@@ -117,9 +131,9 @@ func TestLoad_GRPCEnabledVariations(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			if tc.value == "" {
-				os.Unsetenv("GRPC_ENABLED")
+				unsetEnv(t, "GRPC_ENABLED")
 			} else {
-				os.Setenv("GRPC_ENABLED", tc.value)
+				setEnv(t, "GRPC_ENABLED", tc.value)
 			}
 			cfg, err := Load()
 			require.NoError(t, err)

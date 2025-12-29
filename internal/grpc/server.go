@@ -80,8 +80,14 @@ func NewServer(cfg ServerConfig, todoService *service.TodoService) *Server {
 
 // Start starts the gRPC server.
 func (s *Server) Start() error {
+	return s.StartWithContext(context.Background())
+}
+
+// StartWithContext starts the gRPC server with a context.
+func (s *Server) StartWithContext(ctx context.Context) error {
 	addr := fmt.Sprintf(":%d", s.config.Port)
-	lis, err := net.Listen("tcp", addr)
+	lc := net.ListenConfig{}
+	lis, err := lc.Listen(ctx, "tcp", addr)
 	if err != nil {
 		return fmt.Errorf("failed to listen on %s: %w", addr, err)
 	}

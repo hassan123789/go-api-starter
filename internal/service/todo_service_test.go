@@ -13,15 +13,15 @@ import (
 	"github.com/zareh/go-api-starter/internal/model"
 )
 
-// MockTodoRepository is a mock implementation of TodoRepository for testing
+// MockTodoRepository is a mock implementation of TodoRepository for testing.
 type MockTodoRepository struct {
-	todos       map[int64]*model.Todo
-	nextID      int64
-	createErr   error
-	getByIDErr  error
+	todos        map[int64]*model.Todo
+	nextID       int64
+	createErr    error
+	getByIDErr   error
 	getByUserErr error
-	updateErr   error
-	deleteErr   error
+	updateErr    error
+	deleteErr    error
 }
 
 func NewMockTodoRepository() *MockTodoRepository {
@@ -52,39 +52,41 @@ func (m *MockTodoRepository) GetByID(ctx context.Context, id int64) (*model.Todo
 	if m.getByIDErr != nil {
 		return nil, m.getByIDErr
 	}
-	todo, ok := m.todos[id]
-	if !ok {
-		return nil, sql.ErrNoRows
+	if todo, ok := m.todos[id]; ok {
+		return todo, nil
 	}
-	return todo, nil
+	return nil, sql.ErrNoRows
 }
 
-func (m *MockTodoRepository) GetByUserID(ctx context.Context, userID int64) ([]model.Todo, error) {
+func (m *MockTodoRepository) GetByUserID(ctx context.Context, userID int64) ([]*model.Todo, error) {
 	if m.getByUserErr != nil {
 		return nil, m.getByUserErr
 	}
-	var todos []model.Todo
+	var result []*model.Todo
 	for _, todo := range m.todos {
 		if todo.UserID == userID {
-			todos = append(todos, *todo)
+			result = append(result, todo)
 		}
 	}
-	return todos, nil
+	return result, nil
 }
 
-func (m *MockTodoRepository) GetByUserIDWithPagination(ctx context.Context, userID int64, limit, offset int) ([]model.Todo, int64, error) {
+func (m *MockTodoRepository) GetByUserIDWithPagination(ctx context.Context, userID int64, limit, offset int) ([]*model.Todo, int64, error) {
 	todos, err := m.GetByUserID(ctx, userID)
 	if err != nil {
 		return nil, 0, err
 	}
 	total := int64(len(todos))
+
 	if offset >= len(todos) {
-		return []model.Todo{}, total, nil
+		return []*model.Todo{}, total, nil
 	}
+
 	end := offset + limit
 	if end > len(todos) {
 		end = len(todos)
 	}
+
 	return todos[offset:end], total, nil
 }
 
@@ -96,6 +98,7 @@ func (m *MockTodoRepository) Update(ctx context.Context, id int64, title *string
 	if !ok {
 		return nil, sql.ErrNoRows
 	}
+
 	if title != nil {
 		todo.Title = *title
 	}
@@ -103,6 +106,7 @@ func (m *MockTodoRepository) Update(ctx context.Context, id int64, title *string
 		todo.Completed = *completed
 	}
 	todo.UpdatedAt = time.Now()
+
 	return todo, nil
 }
 
@@ -117,21 +121,19 @@ func (m *MockTodoRepository) Delete(ctx context.Context, id int64) error {
 	return nil
 }
 
-// MockUserRepository is a mock implementation for user repository
+// MockUserRepository is a mock implementation of UserRepository for testing.
 type MockUserRepository struct {
-	users       map[int64]*model.User
-	emailIndex  map[string]int64
-	nextID      int64
-	createErr   error
-	getByIDErr  error
-	getByEmailErr error
+	users     map[int64]*model.User
+	byEmail   map[string]*model.User
+	nextID    int64
+	createErr error
 }
 
 func NewMockUserRepository() *MockUserRepository {
 	return &MockUserRepository{
-		users:      make(map[int64]*model.User),
-		emailIndex: make(map[string]int64),
-		nextID:     1,
+		users:   make(map[int64]*model.User),
+		byEmail: make(map[string]*model.User),
+		nextID:  1,
 	}
 }
 
@@ -147,44 +149,47 @@ func (m *MockUserRepository) Create(ctx context.Context, email, passwordHash str
 		UpdatedAt:    time.Now(),
 	}
 	m.users[m.nextID] = user
-	m.emailIndex[email] = m.nextID
+	m.byEmail[email] = user
 	m.nextID++
 	return user, nil
 }
 
 func (m *MockUserRepository) GetByID(ctx context.Context, id int64) (*model.User, error) {
-	if m.getByIDErr != nil {
-		return nil, m.getByIDErr
+	if user, ok := m.users[id]; ok {
+		return user, nil
 	}
+	return nil, sql.ErrNoRows
+}
+
+func (m *MockUserRepository) GetByEmail(ctx context.Context, email string) (*model.User, error) {
+	if user, ok := m.byEmail[email]; ok {
+		return user, nil
+	}
+	return nil, sql.ErrNoRows
+}
+
+func (m *MockUserRepository) EmailExists(ctx context.Context, email string) (bool, error) {
+	_, exists := m.byEmail[email]
+	return exists, nil
+}
+
+func (m *MockUserRepository) Update(ctx context.Context, id int64, email, passwordHash *string) (*model.User, error) {
 	user, ok := m.users[id]
 	if !ok {
 		return nil, sql.ErrNoRows
 	}
+
+	if email != nil {
+		delete(m.byEmail, user.Email)
+		user.Email = *email
+		m.byEmail[*email] = user
+	}
+	if passwordHash != nil {
+		user.PasswordHash = *passwordHash
+	}
+	user.UpdatedAt = time.Now()
+
 	return user, nil
-}
-
-func (m *MockUserRepository) GetByEmail(ctx context.Context, email string) (*model.User, error) {
-	if m.getByEmailErr != nil {
-		return nil, m.getByEmailErr
-	}
-	id, ok := m.emailIndex[email]
-	if !ok {
-		return nil, sql.ErrNoRows
-	}
-	return m.users[id], nil
-}
-
-func (m *MockUserRepository) EmailExists(ctx context.Context, email string) (bool, error) {
-	_, ok := m.emailIndex[email]
-	return ok, nil
-}
-
-func (m *MockUserRepository) Update(ctx context.Context, user *model.User) error {
-	if _, ok := m.users[user.ID]; !ok {
-		return sql.ErrNoRows
-	}
-	m.users[user.ID] = user
-	return nil
 }
 
 func (m *MockUserRepository) Delete(ctx context.Context, id int64) error {
@@ -192,27 +197,12 @@ func (m *MockUserRepository) Delete(ctx context.Context, id int64) error {
 	if !ok {
 		return sql.ErrNoRows
 	}
-	delete(m.emailIndex, user.Email)
+	delete(m.byEmail, user.Email)
 	delete(m.users, id)
 	return nil
 }
 
-// TestableAuthService wraps AuthService for testing with mock repository
-type TestableAuthService struct {
-	userRepo  *MockUserRepository
-	jwtSecret string
-	jwtExpiry int
-}
-
-func NewTestableAuthService(userRepo *MockUserRepository, jwtSecret string, jwtExpiry int) *TestableAuthService {
-	return &TestableAuthService{
-		userRepo:  userRepo,
-		jwtSecret: jwtSecret,
-		jwtExpiry: jwtExpiry,
-	}
-}
-
-// Tests for TodoService-like behavior
+// Tests for TodoRepository mock
 func TestTodoService_Create(t *testing.T) {
 	repo := NewMockTodoRepository()
 	ctx := context.Background()
@@ -229,14 +219,13 @@ func TestTodoService_GetByID_Success(t *testing.T) {
 	repo := NewMockTodoRepository()
 	ctx := context.Background()
 
-	// Create a todo
-	created, _ := repo.Create(ctx, 1, "Test Todo")
-
-	// Get it back
-	todo, err := repo.GetByID(ctx, created.ID)
+	created, err := repo.Create(ctx, 1, "Test Todo")
 	require.NoError(t, err)
-	assert.Equal(t, created.ID, todo.ID)
-	assert.Equal(t, "Test Todo", todo.Title)
+
+	retrieved, err := repo.GetByID(ctx, created.ID)
+	require.NoError(t, err)
+	assert.Equal(t, created.ID, retrieved.ID)
+	assert.Equal(t, created.Title, retrieved.Title)
 }
 
 func TestTodoService_GetByID_NotFound(t *testing.T) {
@@ -253,10 +242,13 @@ func TestTodoService_ListByUserID(t *testing.T) {
 	ctx := context.Background()
 
 	// Create todos for user 1
-	repo.Create(ctx, 1, "Todo 1")
-	repo.Create(ctx, 1, "Todo 2")
+	_, err := repo.Create(ctx, 1, "Todo 1")
+	require.NoError(t, err)
+	_, err = repo.Create(ctx, 1, "Todo 2")
+	require.NoError(t, err)
 	// Create todo for user 2
-	repo.Create(ctx, 2, "Todo 3")
+	_, err = repo.Create(ctx, 2, "Todo 3")
+	require.NoError(t, err)
 
 	// List user 1's todos
 	todos, err := repo.GetByUserID(ctx, 1)
@@ -278,7 +270,8 @@ func TestTodoService_Update(t *testing.T) {
 	ctx := context.Background()
 
 	// Create a todo
-	created, _ := repo.Create(ctx, 1, "Original Title")
+	created, err := repo.Create(ctx, 1, "Original Title")
+	require.NoError(t, err)
 
 	// Update it
 	newTitle := "Updated Title"
@@ -294,7 +287,8 @@ func TestTodoService_Update_PartialUpdate(t *testing.T) {
 	ctx := context.Background()
 
 	// Create a todo
-	created, _ := repo.Create(ctx, 1, "Original Title")
+	created, err := repo.Create(ctx, 1, "Original Title")
+	require.NoError(t, err)
 
 	// Update only title
 	newTitle := "Updated Title"
@@ -309,10 +303,11 @@ func TestTodoService_Delete(t *testing.T) {
 	ctx := context.Background()
 
 	// Create a todo
-	created, _ := repo.Create(ctx, 1, "Test Todo")
+	created, err := repo.Create(ctx, 1, "Test Todo")
+	require.NoError(t, err)
 
 	// Delete it
-	err := repo.Delete(ctx, created.ID)
+	err = repo.Delete(ctx, created.ID)
 	require.NoError(t, err)
 
 	// Verify it's gone
@@ -360,7 +355,8 @@ func TestUserRepository_EmailExists(t *testing.T) {
 	assert.False(t, exists)
 
 	// After creating
-	repo.Create(ctx, "test@example.com", "hashedpassword")
+	_, err = repo.Create(ctx, "test@example.com", "hashedpassword")
+	require.NoError(t, err)
 	exists, err = repo.EmailExists(ctx, "test@example.com")
 	require.NoError(t, err)
 	assert.True(t, exists)
@@ -370,7 +366,8 @@ func TestUserRepository_GetByEmail(t *testing.T) {
 	repo := NewMockUserRepository()
 	ctx := context.Background()
 
-	repo.Create(ctx, "test@example.com", "hashedpassword")
+	_, err := repo.Create(ctx, "test@example.com", "hashedpassword")
+	require.NoError(t, err)
 
 	user, err := repo.GetByEmail(ctx, "test@example.com")
 	require.NoError(t, err)
@@ -392,7 +389,8 @@ func TestPagination(t *testing.T) {
 
 	// Create 5 todos
 	for i := 0; i < 5; i++ {
-		repo.Create(ctx, 1, "Todo")
+		_, err := repo.Create(ctx, 1, "Todo")
+		require.NoError(t, err)
 	}
 
 	// Get page 1 (limit 2, offset 0)

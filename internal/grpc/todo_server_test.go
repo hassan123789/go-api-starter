@@ -197,7 +197,11 @@ func TestIntegration_TodoService(t *testing.T) {
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	require.NoError(t, err)
-	defer conn.Close()
+	defer func() {
+		if closeErr := conn.Close(); closeErr != nil {
+			t.Logf("failed to close connection: %v", closeErr)
+		}
+	}()
 
 	client := todov1.NewTodoServiceClient(conn)
 
