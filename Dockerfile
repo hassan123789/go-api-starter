@@ -1,5 +1,5 @@
 # Build stage
-FROM golang:1.25-alpine AS builder
+FROM golang:1.26-alpine AS builder
 
 WORKDIR /app
 
@@ -25,7 +25,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
     -o /server ./cmd/server
 
 # Security scan stage (optional, for CI)
-FROM golang:1.25-alpine AS security
+FROM golang:1.26-alpine AS security
 RUN go install golang.org/x/vuln/cmd/govulncheck@latest
 COPY --from=builder /app /app
 WORKDIR /app
